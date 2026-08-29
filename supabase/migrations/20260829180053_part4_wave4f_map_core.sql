@@ -1,0 +1,10 @@
+begin;
+insert into ops.migration_entity_map(entity_key,source_sheet,target_schema,target_table,source_pk_header,target_pk_column,source_of_truth,migration_priority,sensitivity,id_regex,compare_fields,target_ready)
+values
+('Candidate','01_Candidate','core','candidates','Candidate ID','candidate_id','Data Hub','P0','PRIVATE','^WC-C-[0-9]{6}$',array['candidate_id','nickname','origin_province','education','primary_experience','preferred_job','expected_income','shift_preference','relocation_ready','ready_date','has_vehicle','dorm_needed','dorm_budget','documents_ready','medical_ready','source_type','partner_id','status','next_action'],true),
+('Job','02_งาน_Job','core','jobs','Job ID','job_id','Data Hub','P0','INTERNAL','^WC-J-[0-9]{6}$',array['job_id','client_id','workplace_name','province','area','position_name','headcount','wage','shift','start_date','milestone_deal','payment_term','status','last_confirmed_at'],true),
+('Client','03_Client','core','clients','Client ID','client_id','Data Hub','P0','INTERNAL','^WC-B2B-[0-9]{4}$',array['client_id','client_type','company_name','province','area','crm_status','payment_term','billing_cycle','verification_status'],true),
+('Partner','04_Partner','core','partners','Partner ID','partner_id','Data Hub','P1','INTERNAL','^WC-P-[0-9]{4}$',array['partner_id','partner_name','partner_type','province','parent_partner_id','status','started_at'],true),
+('Placement','05_Placement','core','placements','Placement ID','placement_id','Data Hub','P0','INTERNAL','^WC-PL-[0-9]{6}$',array['placement_id','candidate_id','job_id','status','submitted_at','appointment_at','applied_at','start_date','dropout_reason','notes'],true)
+on conflict(entity_key) do update set source_sheet=excluded.source_sheet,target_schema=excluded.target_schema,target_table=excluded.target_table,source_pk_header=excluded.source_pk_header,target_pk_column=excluded.target_pk_column,source_of_truth=excluded.source_of_truth,migration_priority=excluded.migration_priority,sensitivity=excluded.sensitivity,id_regex=excluded.id_regex,compare_fields=excluded.compare_fields,target_ready=excluded.target_ready,updated_at=now();
+commit;
