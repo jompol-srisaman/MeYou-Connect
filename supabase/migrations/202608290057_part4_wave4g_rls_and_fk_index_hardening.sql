@@ -1,0 +1,22 @@
+create index if not exists cutover_check_results_check_key_idx on ops.cutover_check_results(check_key);
+create index if not exists delta_rows_entity_key_idx on ops.delta_rows(entity_key);
+create index if not exists rehearsal_target_rows_entity_key_idx on ops.rehearsal_target_rows(entity_key);
+
+drop policy if exists deny_client_access on ops.cutover_rehearsals;
+create policy deny_client_access on ops.cutover_rehearsals for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.rehearsal_target_rows;
+create policy deny_client_access on ops.rehearsal_target_rows for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.delta_batches;
+create policy deny_client_access on ops.delta_batches for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.delta_rows;
+create policy deny_client_access on ops.delta_rows for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.rehearsal_reconciliation_runs;
+create policy deny_client_access on ops.rehearsal_reconciliation_runs for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.rehearsal_reconciliation_results;
+create policy deny_client_access on ops.rehearsal_reconciliation_results for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.migration_fk_rules;
+create policy deny_client_access on ops.migration_fk_rules for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.cutover_check_catalog;
+create policy deny_client_access on ops.cutover_check_catalog for all to anon,authenticated using(false) with check(false);
+drop policy if exists deny_client_access on ops.cutover_check_results;
+create policy deny_client_access on ops.cutover_check_results for all to anon,authenticated using(false) with check(false);
