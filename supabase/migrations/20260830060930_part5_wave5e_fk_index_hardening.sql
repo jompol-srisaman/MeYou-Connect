@@ -1,0 +1,1 @@
+create index if not exists credential_bindings_environment_idx on ops.credential_bindings(environment);
