@@ -1,0 +1,1 @@
+create index if not exists portal_action_requests_action_key_idx on ops.portal_action_requests(action_key);
