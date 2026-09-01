@@ -1,0 +1,1 @@
+create index if not exists province_scale_gate_results_gate_idx on ops.province_scale_gate_results(gate_key,province_code);
