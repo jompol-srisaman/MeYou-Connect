@@ -11,6 +11,13 @@ Move business ownership/access to the MeYou Connect business identity while pres
 
 Do not recreate working systems solely to change account email.
 
+Target operating model:
+- **Primary / Operational Google account:** `meyouconnect.official@gmail.com`
+- **Primary Drive root:** `1B45lICTcE_ADlh9JOYr96yB6__kcXdBO`
+- **Personal account:** `jompol.srisaman@gmail.com`
+- **Personal account role after stabilization:** controlled recovery identity + off-account backup destination
+- **Off-account backup root:** `1j9lHYVy5azmmizayBLzw7oAsfXizqrqX`
+
 ## Google Drive
 
 Current connected Drive identity: `jompol.srisaman@gmail.com`.
@@ -21,16 +28,41 @@ Completed:
 - logged backup run `MYC-BK-000008`;
 - updated `MYC-MIG-000001` to `IN_PROGRESS`;
 - shared critical Tier-A/architecture assets to `meyouconnect.official@gmail.com` as Writer;
-- verified Data Hub and Control Index retain original File IDs and destination Writer access.
+- verified Data Hub and Control Index retain original File IDs and destination Writer access;
+- prepared personal-account off-account backup root `MEYOU_CONNECT_OFF_ACCOUNT_BACKUP_FROM_OFFICIAL` (`1j9lHYVy5azmmizayBLzw7oAsfXizqrqX`);
+- prepared backup subfolders for Tier-A critical, weekly snapshots, monthly full exports, restore tests, and manifests/checksums;
+- registered the off-account backup target in the Backup Manifest.
+
+Current observation:
+- Primary target root supplied by Founder: `1B45lICTcE_ADlh9JOYr96yB6__kcXdBO`.
+- Current personal-account MCP cannot access that root yet, confirming MCP has not been re-authenticated to the official account and the new root is not currently visible to the personal connector.
 
 Pending user-side:
 - transfer Google Drive ownership where supported;
 - accept ownership from `meyouconnect.official@gmail.com`;
 - handle root/subfolder ownership from Google Drive UI;
 - reconnect ChatGPT Google Drive/Gmail/Calendar/Contacts to the business account;
-- run post-migration reconciliation and off-account backup after new-account MCP access is active.
+- after re-authentication, verify canonical File IDs/links and migrate/copy any remaining assets into the new Primary root;
+- run post-migration reconciliation;
+- create the first real off-account backup from Official Primary to the personal-account backup root;
+- run sample restore verification before marking migration complete.
 
 Connector limitation: current Drive MCP cannot set Google Drive API `transferOwnership`, so ownership transfer cannot be completed from ChatGPT.
+
+## Backup direction
+
+After MCP is connected to the official account, the canonical direction is:
+
+`meyouconnect.official@gmail.com / Primary → jompol.srisaman@gmail.com / Off-account Backup`
+
+The personal backup location is not an Operational Source of Truth and must never become a parallel writable master.
+
+Planned cadence:
+- Tier-A structured data: daily target when automation is available;
+- weekly controlled snapshot;
+- monthly full export;
+- restore test sample monthly and after material migration/change;
+- preserve original evidence bytes where possible.
 
 ## GitHub
 
@@ -76,7 +108,8 @@ No live LINE/Meta production adapters are bound yet. Create future LINE Official
 Migration remains `IN_PROGRESS` until:
 1. destination business account owns/controls critical Drive assets;
 2. Drive MCP can read canonical sources under the new account;
-3. an off-account backup exists and a sample restore is verified;
-4. business identity has admin/owner access to GitHub/Supabase as intended;
-5. old personal identity remains a controlled recovery path during stabilization;
-6. no canonical `MYC-*` ID changed because of account migration.
+3. Primary root `1B45lICTcE_ADlh9JOYr96yB6__kcXdBO` is verified and reconciled;
+4. an off-account backup exists under personal account root `1j9lHYVy5azmmizayBLzw7oAsfXizqrqX` and a sample restore is verified;
+5. business identity has admin/owner access to GitHub/Supabase as intended;
+6. old personal identity remains a controlled recovery path during stabilization;
+7. no canonical `MYC-*` ID changed because of account migration.
