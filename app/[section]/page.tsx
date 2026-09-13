@@ -5,6 +5,7 @@ import { canonicalSystem, modules, type ModuleKey } from "@/lib/phase0";
 const validSections = new Set<ModuleKey>([
   "candidates",
   "jobs",
+  "inbox",
   "clients",
   "partners",
   "system",
@@ -24,6 +25,13 @@ const moduleDetails: Record<Exclude<ModuleKey, "dashboard">, string[]> = {
     "Transport / Dorm",
     "Client / Subcontractor link",
     "Candidate pipeline",
+  ],
+  inbox: [
+    "LINE Raw feed แยกตามกลุ่ม / thread",
+    "Sender / เวลา / Source",
+    "Text / Image / File entry",
+    "Verified Candidate / Job link เมื่อมีหลักฐาน",
+    "Unknown / DQ เมื่อความสัมพันธ์ยังไม่ชัด",
   ],
   clients: [
     "Client profile / contact",
@@ -63,7 +71,7 @@ export default async function ModuleWorkspace({
     <AppShell active={key}>
       <header className="page-header">
         <div>
-          <p className="eyebrow">P0 WORKSPACE</p>
+          <p className="eyebrow">PWA V0.1 WORKSPACE</p>
           <h1>{item.label}</h1>
           <p className="page-subtitle">{item.summary}</p>
         </div>
@@ -95,7 +103,7 @@ export default async function ModuleWorkspace({
           <p className="large-copy">{item.next}</p>
           <div className="divider" />
           <p className="safe-note">
-            ไม่มีการเขียน Master โดยตรงจากหน้า UI ใน Phase นี้ และไม่มีการใช้ TEST shadow เป็น Operational Source
+            ไม่มีการเขียน Master โดยตรงจากหน้า UI ใน V0.1 และไม่มีการใช้ TEST shadow เป็น Operational Source
           </p>
         </div>
       </section>
@@ -109,6 +117,18 @@ export default async function ModuleWorkspace({
             </p>
           </div>
           <span>DQ BOUNDARY</span>
+        </section>
+      ) : null}
+
+      {key === "inbox" ? (
+        <section className="notice notice-warning">
+          <div>
+            <strong>Inbox safety boundary</strong>
+            <p>
+              V0.1 จะแสดง Raw/Evidence แบบ read-only ก่อน การผูก Entity หรือแก้ Master ต้องผ่าน verified relation + command/validator layer
+            </p>
+          </div>
+          <span>READ ONLY FIRST</span>
         </section>
       ) : null}
     </AppShell>
