@@ -9,6 +9,18 @@ function readinessLabel(readiness: string) {
   return "ยังไม่มี";
 }
 
+const mobileNav: Array<{ key: ModuleKey; label: string }> = [
+  { key: "dashboard", label: "หน้าแรก" },
+  { key: "candidates", label: "ผู้สมัคร" },
+  { key: "jobs", label: "งาน" },
+  { key: "inbox", label: "กล่องเข้า" },
+  { key: "system", label: "เพิ่มเติม" },
+];
+
+function moduleHref(key: ModuleKey) {
+  return key === "dashboard" ? "/" : `/${key}`;
+}
+
 export function AppShell({
   active,
   children,
@@ -30,11 +42,10 @@ export function AppShell({
         <nav className="nav-list" aria-label="เมนูหลัก">
           {navOrder.map((key) => {
             const item = modules[key];
-            const href = key === "dashboard" ? "/" : `/${key}`;
             return (
               <Link
                 key={key}
-                href={href}
+                href={moduleHref(key)}
                 className={`nav-item ${active === key ? "active" : ""}`}
               >
                 <span>{item.shortLabel}</span>
@@ -47,13 +58,25 @@ export function AppShell({
         <div className="sidebar-foot">
           <span className="status-dot" />
           <div>
-            <strong>Internal P0</strong>
-            <p>ไม่เปิด External Portal</p>
+            <strong>Founder PWA V0.1</strong>
+            <p>Internal only · Safe Mode</p>
           </div>
         </div>
       </aside>
 
       <main className="main-area">{children}</main>
+
+      <nav className="mobile-bottom-nav" aria-label="เมนูมือถือ">
+        {mobileNav.map(({ key, label }) => (
+          <Link
+            key={key}
+            href={moduleHref(key)}
+            className={`mobile-bottom-item ${active === key ? "active" : ""}`}
+          >
+            <span>{label}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }
