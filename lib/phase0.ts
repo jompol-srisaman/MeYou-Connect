@@ -4,6 +4,7 @@ export type ModuleKey =
   | "dashboard"
   | "candidates"
   | "jobs"
+  | "inbox"
   | "clients"
   | "partners"
   | "system";
@@ -65,6 +66,14 @@ export const modules: Record<
     source: "Data Hub Job Master",
     next: "ต่อ official read adapter และใช้ Part 4 API contract เมื่อเหมาะสม",
   },
+  inbox: {
+    label: "Unified Inbox",
+    shortLabel: "Inbox",
+    readiness: "PARTIAL",
+    summary: "LINE Raw/Event มีอยู่จริง แต่หน้า Inbox ยังต้องต่อ approved read surface และ verified entity links",
+    source: "Supabase Raw/Event technical surface + Data Hub entity authority",
+    next: "แสดง thread/source/text/image/file/DQ แบบ read-only ก่อนเปิด controlled actions",
+  },
   clients: {
     label: "Client / B2B",
     shortLabel: "Client",
@@ -95,6 +104,7 @@ export const navOrder: ModuleKey[] = [
   "dashboard",
   "candidates",
   "jobs",
+  "inbox",
   "clients",
   "partners",
   "system",
