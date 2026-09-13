@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
+import "./pwa.css";
 
 export const metadata: Metadata = {
   title: "MYC Founder Operations",
