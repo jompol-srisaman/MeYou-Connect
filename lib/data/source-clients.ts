@@ -3,6 +3,8 @@ import { createSign } from "node:crypto";
 export const DATA_HUB_SPREADSHEET_ID = "1o52Vpri7toZDviODQ12tpOoLgCs7Z5cYMmUZMc0Jeoc";
 export const SUPABASE_PROJECT_REF = "pgjmxdeafzogzsyawejs";
 
+type GoogleServiceAccount = { client_email: string; private_key: string };
+
 export class SourceReadError extends Error {
   constructor(
     public readonly reasonCode: string,
@@ -17,12 +19,12 @@ export class SourceReadError extends Error {
 const base64Url = (value: string | Buffer) =>
   Buffer.from(value).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 
-function parseServiceAccount() {
+function parseServiceAccount(): GoogleServiceAccount | null {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as { client_email?: string; private_key?: string };
-      if (parsed.client_email && parsed.private_key) return parsed;
+      if (parsed.client_email && parsed.private_key) return { client_email: parsed.client_email, private_key: parsed.private_key };
     } catch {
       throw new SourceReadError(
         "GOOGLE_DATA_HUB_AUTH_INVALID",
