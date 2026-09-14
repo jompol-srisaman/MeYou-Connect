@@ -1,59 +1,33 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell, ReadinessBadge, SourcePill } from "@/components/app-shell";
-import { canonicalSystem, modules, type ModuleKey } from "@/lib/phase0";
+import { LiveReadPanel } from "@/components/live-read-panel";
+import { modules, type ModuleKey } from "@/lib/phase0";
 
-const validSections = new Set<ModuleKey>([
-  "candidates",
-  "jobs",
-  "inbox",
-  "clients",
-  "partners",
-  "system",
-]);
-
+const validSections = new Set<ModuleKey>(["candidates", "jobs", "inbox", "clients", "partners", "system"]);
 type WorkspaceKey = Exclude<ModuleKey, "dashboard">;
 
-const workspaceContent: Record<WorkspaceKey, { primary: string[]; secondary: string[] }> = {
-  candidates: {
-    primary: ["ค้นหา / รายชื่อ Candidate", "Profile + Status + Next Action", "Follow-up / Timeline", "Evidence links"],
-    secondary: ["Match proposal ผ่าน command layer เท่านั้น", "Candidate live promotion ต้องผ่าน Data Manager canonical flow"],
-  },
-  jobs: {
-    primary: ["Active / Inactive Jobs", "Requirement / Wage / OT / Shift", "Headcount / Pipeline", "Transport / Dorm"],
-    secondary: ["Client/Sub source link", "Match context โดยไม่สร้างข้อมูลสมัครปลอม"],
-  },
-  inbox: {
-    primary: ["LINE Raw feed แยก thread/source", "Text / Image / File evidence", "Verified entity link", "Unknown / DQ state"],
-    secondary: ["Read-only first", "การผูก entity หรือเปลี่ยน Master ต้องผ่าน validator/permission"],
-  },
-  clients: {
-    primary: ["Client profile / contact", "Active demand / Job links", "Follow-up / next action", "Payment term reference"],
-    secondary: ["Read workspace ก่อน controlled writes", "ไม่มีการแก้ Master ตรงจาก UI"],
-  },
-  partners: {
-    primary: ["Partner profile", "Candidate attribution", "Referral pipeline", "Placement outcome"],
-    secondary: ["Evidence first", "Commission visibility แยกจาก payment control"],
-  },
-  system: {
-    primary: ["LINE ingestion health", "Raw / Event / Worker readiness", "DQ queue", "Source freshness"],
-    secondary: ["Feature flags / kill-switch boundary", "Production gate ยังปิดใน Preview"],
-  },
+const liveConfig: Record<WorkspaceKey, { endpoint: string; kind: "candidate" | "job" | "inbox" | "client" | "partner" | "system" }> = {
+  candidates: { endpoint: "/api/v1/read/candidates", kind: "candidate" },
+  jobs: { endpoint: "/api/v1/read/jobs", kind: "job" },
+  inbox: { endpoint: "/api/v1/read/inbox/line", kind: "inbox" },
+  clients: { endpoint: "/api/v1/read/clients", kind: "client" },
+  partners: { endpoint: "/api/v1/read/partners", kind: "partner" },
+  system: { endpoint: "/api/v1/read/system/health", kind: "system" },
 };
 
 export default async function ModuleWorkspace({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;
   if (!validSections.has(section as ModuleKey)) notFound();
-
   const key = section as WorkspaceKey;
   const item = modules[key];
-  const content = workspaceContent[key];
+  const live = liveConfig[key];
 
   return (
     <AppShell active={key}>
       <header className="page-header compact-page-header">
         <div>
-          <p className="eyebrow">PWA V0.1 WORKSPACE</p>
+          <p className="eyebrow">OFFICIAL READ V1</p>
           <h1>{item.label}</h1>
           <p className="page-subtitle">{item.summary}</p>
         </div>
@@ -61,58 +35,22 @@ export default async function ModuleWorkspace({ params }: { params: Promise<{ se
       </header>
 
       <section className="workspace-status-card">
-        <div>
-          <span className="workspace-status-label">ข้อมูลใช้งานจริง</span>
-          <strong>{item.readiness === "READY" ? "READY" : "NOT_READY"}</strong>
-          <p>Source เป้าหมาย: {item.source}</p>
-        </div>
-        <SourcePill>{canonicalSystem.operationalSource.kind}</SourcePill>
+        <div><span className="workspace-status-label">Canonical source</span><strong>{item.source}</strong><p>Runtime readiness จะแสดงจาก server endpoint ด้านล่าง</p></div>
+        <SourcePill>{key === "system" || key === "inbox" ? "SUPABASE_TECHNICAL" : "GOOGLE_SHEETS_DRIVE"}</SourcePill>
       </section>
 
-      <section className="workspace-grid">
-        <article className="panel workspace-panel">
-          <p className="eyebrow">เมื่อ Data Contract พร้อม</p>
-          <h2>Founder จะทำอะไรได้จากหน้านี้</h2>
-          <ul className="feature-list">
-            {content.primary.map((detail) => <li key={detail}>{detail}</li>)}
-          </ul>
-        </article>
-
-        <article className="panel workspace-panel boundary-panel">
-          <p className="eyebrow">Safety / Boundary</p>
-          <h2>ขอบเขตที่ยังล็อกไว้</h2>
-          <ul className="feature-list">
-            {content.secondary.map((detail) => <li key={detail}>{detail}</li>)}
-          </ul>
-        </article>
-      </section>
+      <LiveReadPanel endpoint={live.endpoint} kind={live.kind} title="ข้อมูลใช้งานจริง" />
 
       <section className="next-step-card">
-        <div>
-          <span>Next implementation</span>
-          <strong>{item.next}</strong>
-        </div>
+        <div><span>Safety boundary</span><strong>Read-only Preview · no protected Master writes</strong></div>
         <Link href="/" className="secondary-button">กลับหน้า Today</Link>
       </section>
 
       {key === "candidates" ? (
-        <section className="notice notice-danger">
-          <div>
-            <strong>Candidate data dependency</strong>
-            <p>Live Candidate ยังคงขึ้นกับ canonical downstream fix / DQ ของ DATA & AI SYSTEM MANAGER V2 ห้ามสร้าง pipeline คู่ขนาน</p>
-          </div>
-          <span>DATA LOCK</span>
-        </section>
+        <section className="notice notice-warning"><div><strong>Candidate completeness guard</strong><p>ถ้า `ops.candidate_promotion_gap_v` ยังมี unverified linkage หน้านี้ต้องเป็น STALE + UNPROMOTED_RAW_GAP และห้ามใช้จำนวนเป็น authoritative</p></div><span>GUARDED</span></section>
       ) : null}
-
       {key === "inbox" ? (
-        <section className="notice notice-warning">
-          <div>
-            <strong>Inbox read-only first</strong>
-            <p>Raw/Evidence แสดงได้เมื่อ approved read surface พร้อม แต่ action ที่มีผลต่อ Master ต้องผ่าน command + validator + permission ก่อนเสมอ</p>
-          </div>
-          <span>READ ONLY</span>
-        </section>
+        <section className="notice notice-warning"><div><strong>Inbox sensitive data</strong><p>Preview แสดงเฉพาะ metadata ที่ลดความอ่อนไหว; sender reference และ message/raw summary ไม่ออกสู่ browser จน permission context พร้อม</p></div><span>REDACTED</span></section>
       ) : null}
     </AppShell>
   );
