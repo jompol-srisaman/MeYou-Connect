@@ -37,3 +37,20 @@ test("Founder Home exposes required action lanes without fake metrics", async ()
   }
   assert.ok(page.includes("NO FAKE DATA"));
 });
+
+test("Android PWA manifest declares explicit Chromium install icon sizes", async () => {
+  const manifest = await read("app/manifest.ts");
+  assert.match(manifest, /sizes:\s*"192x192"/);
+  assert.match(manifest, /sizes:\s*"512x512"/);
+  assert.match(manifest, /display:\s*"standalone"/);
+  assert.match(manifest, /prefer_related_applications:\s*false/);
+});
+
+test("mobile and tablet breakpoints are explicitly defined", async () => {
+  const core = await read("app/globals.css");
+  const pwa = await read("app/pwa.css");
+  const combined = `${core}\n${pwa}`;
+  assert.match(combined, /@media \(max-width:\s*980px\)/);
+  assert.match(combined, /@media \(max-width:\s*680px\)/);
+  assert.match(pwa, /grid-template-columns:\s*repeat\(5,/);
+});
