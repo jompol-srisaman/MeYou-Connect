@@ -1,64 +1,106 @@
+import Link from "next/link";
 import { AppShell, ReadinessBadge, SourcePill } from "@/components/app-shell";
-import { canonicalSystem, modules, navOrder } from "@/lib/phase0";
+import { canonicalSystem, modules } from "@/lib/phase0";
 
-const todayCards = [
-  ["Candidate ใหม่", "รอ Live Adapter"],
-  ["ต้องโทรวันนี้", "รอ Live Adapter"],
-  ["นัดสมัคร", "รอ Live Adapter"],
-  ["Start", "รอ Live Adapter"],
-  ["Follow-up Due", "รอ Live Adapter"],
-  ["Collected", "รอ Live Adapter"],
+const founderLanes = [
+  {
+    title: "Need My Action",
+    tone: "danger",
+    description: "งานที่ต้องให้ Founder ตัดสินใจหรือดำเนินการเอง",
+    items: ["รอ Official Read Contract เพื่อคำนวณรายการจริง", "ไม่มีการสร้างรายการจำลอง"],
+  },
+  {
+    title: "Today / Follow-up",
+    tone: "brand",
+    description: "นัดหมายและ Follow-up ที่ต้องทำวันนี้",
+    items: ["สถานะข้อมูล: NOT_READY", "Source เป้าหมาย: Data Hub / approved read adapter"],
+  },
+  {
+    title: "Urgent / Warning",
+    tone: "warning",
+    description: "ข้อผิดพลาด, DQ, deadline และความเสี่ยงที่ต้องเห็นก่อน",
+    items: ["Candidate live readiness ยังติด Data dependency", "ระบบจะไม่ใช้ TEST shadow แทน Operational truth"],
+  },
+  {
+    title: "AI / System Handled",
+    tone: "success",
+    description: "งานที่ระบบจัดการได้เองโดยไม่ต้องรบกวน Founder",
+    items: ["PWA shell + safe update พร้อมใน Preview", "API caching ถูกปิดตาม policy"],
+  },
+] as const;
+
+const quickLinks = [
+  ["ผู้สมัคร", "/candidates", modules.candidates.readiness],
+  ["งาน", "/jobs", modules.jobs.readiness],
+  ["กล่องเข้า", "/inbox", modules.inbox.readiness],
+  ["เพิ่มเติม", "/more", "PARTIAL"],
 ] as const;
 
 export default function FounderDashboard() {
   return (
     <AppShell active="dashboard">
-      <header className="page-header">
+      <header className="page-header founder-header">
         <div>
-          <p className="eyebrow">FOUNDER CONTROL CENTER</p>
-          <h1>ภาพรวมวันนี้</h1>
+          <p className="eyebrow">FOUNDER TODAY</p>
+          <h1>วันนี้ต้องทำอะไรบ้าง</h1>
           <p className="page-subtitle">
-            หน้าแรกของ MYC Internal Operations — แสดงเฉพาะข้อมูลที่ระบุแหล่งและความพร้อมชัดเจน
+            MYC แสดงสิ่งที่ต้องตัดสินใจและข้อยกเว้นก่อน ส่วนข้อมูลที่ยังไม่ผ่าน Official Contract จะแสดง NOT_READY แทนการเดา
           </p>
         </div>
         <SourcePill>{canonicalSystem.operationalSource.kind}</SourcePill>
       </header>
 
-      <section className="notice notice-warning">
-        <div>
-          <strong>Operational Live Adapter ยังไม่เชื่อม</strong>
-          <p>
-            ตัวเลขธุรกิจด้านล่างจึงไม่ถูกเดาหรือดึงจาก Supabase TEST shadow มาแทนข้อมูลจริง
-          </p>
-        </div>
-        <span>SAFE MODE</span>
+      <section className="quick-grid" aria-label="ทางลัดหลัก">
+        {quickLinks.map(([label, href, readiness]) => (
+          <Link className="quick-link" href={href} key={href}>
+            <strong>{label}</strong>
+            <ReadinessBadge readiness={readiness} />
+          </Link>
+        ))}
       </section>
 
-      <section className="metric-grid" aria-label="ตัวชี้วัดวันนี้">
-        {todayCards.map(([label, value]) => (
-          <article className="metric-card" key={label}>
-            <span>{label}</span>
-            <strong className="metric-pending">{value}</strong>
-            <small>Source: Data Hub</small>
+      <section className="notice notice-warning">
+        <div>
+          <strong>Live Operational Read ยัง NOT_READY</strong>
+          <p>
+            Issue #2 ยังไม่ได้ส่ง canonical read interface กลับมา จึงยังไม่แสดงจำนวน Candidate, Follow-up, Revenue หรือ Inbox เป็นตัวเลขจริง
+          </p>
+        </div>
+        <span>NO FAKE DATA</span>
+      </section>
+
+      <section className="founder-lane-grid" aria-label="Founder work lanes">
+        {founderLanes.map((lane) => (
+          <article className={`action-lane action-lane-${lane.tone}`} key={lane.title}>
+            <div className="action-lane-head">
+              <div>
+                <p className="eyebrow">{lane.title}</p>
+                <h2>{lane.description}</h2>
+              </div>
+              <span className="state-chip">NOT_READY</span>
+            </div>
+            <ul className="compact-list">
+              {lane.items.map((item) => <li key={item}>{item}</li>)}
+            </ul>
           </article>
         ))}
       </section>
 
-      <section className="two-column">
+      <section className="two-column home-lower-grid">
         <div className="panel">
           <div className="panel-head">
             <div>
-              <p className="eyebrow">P0 MODULES</p>
-              <h2>ความพร้อมของหน้าหลัก</h2>
+              <p className="eyebrow">DATA READINESS</p>
+              <h2>ความพร้อมของข้อมูลใช้งานจริง</h2>
             </div>
           </div>
           <div className="module-list">
-            {navOrder.map((key) => {
-              const item = modules[key];
+            {["candidates", "jobs", "inbox", "clients", "partners", "system"].map((key) => {
+              const item = modules[key as keyof typeof modules];
               return (
                 <div className="module-row" key={key}>
                   <div>
-                    <strong>{item.label}</strong>
+                    <strong>{item.shortLabel}</strong>
                     <p>{item.summary}</p>
                   </div>
                   <ReadinessBadge readiness={item.readiness} />
@@ -68,38 +110,17 @@ export default function FounderDashboard() {
           </div>
         </div>
 
-        <div className="panel">
-          <div className="panel-head">
-            <div>
-              <p className="eyebrow">SOURCE CONTROL</p>
-              <h2>ระบบที่ Web App ต้องเคารพ</h2>
-            </div>
-          </div>
-          <dl className="detail-list">
-            <div>
-              <dt>Operational Source</dt>
-              <dd>{canonicalSystem.operationalSource.name}</dd>
-            </div>
-            <div>
-              <dt>Supabase</dt>
-              <dd>{canonicalSystem.supabase.projectRef}</dd>
-            </div>
-            <div>
-              <dt>Supabase Role</dt>
-              <dd>{canonicalSystem.supabase.role}</dd>
-            </div>
-            <div>
-              <dt>Vercel</dt>
-              <dd>{canonicalSystem.vercel.projectName}</dd>
-            </div>
-          </dl>
+        <div className="panel safe-boundary-panel">
+          <p className="eyebrow">SAFE BOUNDARY</p>
+          <h2>สิ่งที่ PWA V0.1 จะไม่ทำ</h2>
+          <ul className="compact-list">
+            <li>ไม่ Direct-write protected Master</li>
+            <li>ไม่ Cache `/api/**`</li>
+            <li>Offline ไม่แก้ Master</li>
+            <li>ไม่ใช้ Supabase TEST shadow เป็นข้อมูลธุรกิจจริง</li>
+            <li>Production cutover ยังเป็น Founder Gate</li>
+          </ul>
         </div>
-      </section>
-
-      <section className="panel flow-panel">
-        <p className="eyebrow">CANONICAL FLOW</p>
-        <h2>เส้นทางข้อมูลที่ห้ามข้าม</h2>
-        <code>{canonicalSystem.canonicalFlow}</code>
       </section>
     </AppShell>
   );
