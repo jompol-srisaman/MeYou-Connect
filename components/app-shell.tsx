@@ -32,7 +32,9 @@ export function AppShell({
     <div className="app-frame">
       <aside className="sidebar">
         <div className="brand-block">
-          <div className="brand-mark">MYC</div>
+          <div className="brand-mark" aria-label="MeYou Connect">
+            <img src="/myc-icon.svg" alt="" width="46" height="46" />
+          </div>
           <div>
             <strong>{canonicalSystem.brand}</strong>
             <p>{canonicalSystem.concept}</p>
