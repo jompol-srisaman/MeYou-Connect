@@ -1,20 +1,23 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { OfflineStatus } from "@/components/offline-status";
 import { canonicalSystem, modules, navOrder, type ModuleKey } from "@/lib/phase0";
+
+export type ShellActive = ModuleKey | "more";
 
 function readinessLabel(readiness: string) {
   if (readiness === "READY") return "พร้อม";
   if (readiness === "PARTIAL") return "บางส่วน";
   if (readiness === "BLOCKED") return "ติด Dependency";
-  return "ยังไม่มี";
+  return "ยังไม่พร้อม";
 }
 
-const mobileNav: Array<{ key: ModuleKey; label: string }> = [
-  { key: "dashboard", label: "หน้าแรก" },
-  { key: "candidates", label: "ผู้สมัคร" },
-  { key: "jobs", label: "งาน" },
-  { key: "inbox", label: "กล่องเข้า" },
-  { key: "system", label: "เพิ่มเติม" },
+const mobileNav: Array<{ key: ShellActive; label: string; href: string }> = [
+  { key: "dashboard", label: "หน้าแรก", href: "/" },
+  { key: "candidates", label: "ผู้สมัคร", href: "/candidates" },
+  { key: "jobs", label: "งาน", href: "/jobs" },
+  { key: "inbox", label: "กล่องเข้า", href: "/inbox" },
+  { key: "more", label: "เพิ่มเติม", href: "/more" },
 ];
 
 function moduleHref(key: ModuleKey) {
@@ -25,7 +28,7 @@ export function AppShell({
   active,
   children,
 }: {
-  active: ModuleKey;
+  active: ShellActive;
   children: ReactNode;
 }) {
   return (
@@ -66,13 +69,16 @@ export function AppShell({
         </div>
       </aside>
 
-      <main className="main-area">{children}</main>
+      <main className="main-area">
+        <OfflineStatus />
+        {children}
+      </main>
 
       <nav className="mobile-bottom-nav" aria-label="เมนูมือถือ">
-        {mobileNav.map(({ key, label }) => (
+        {mobileNav.map(({ key, label, href }) => (
           <Link
             key={key}
-            href={moduleHref(key)}
+            href={href}
             className={`mobile-bottom-item ${active === key ? "active" : ""}`}
           >
             <span>{label}</span>
