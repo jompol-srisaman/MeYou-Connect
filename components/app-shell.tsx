@@ -1,26 +1,43 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { OfflineStatus } from "@/components/offline-status";
 import { canonicalSystem, modules, navOrder, type ModuleKey } from "@/lib/phase0";
+
+export type ShellActive = ModuleKey | "more";
 
 function readinessLabel(readiness: string) {
   if (readiness === "READY") return "พร้อม";
   if (readiness === "PARTIAL") return "บางส่วน";
   if (readiness === "BLOCKED") return "ติด Dependency";
-  return "ยังไม่มี";
+  return "ยังไม่พร้อม";
+}
+
+const mobileNav: Array<{ key: ShellActive; label: string; href: string }> = [
+  { key: "dashboard", label: "หน้าแรก", href: "/" },
+  { key: "candidates", label: "ผู้สมัคร", href: "/candidates" },
+  { key: "jobs", label: "งาน", href: "/jobs" },
+  { key: "inbox", label: "กล่องเข้า", href: "/inbox" },
+  { key: "more", label: "เพิ่มเติม", href: "/more" },
+];
+
+function moduleHref(key: ModuleKey) {
+  return key === "dashboard" ? "/" : `/${key}`;
 }
 
 export function AppShell({
   active,
   children,
 }: {
-  active: ModuleKey;
+  active: ShellActive;
   children: ReactNode;
 }) {
   return (
     <div className="app-frame">
       <aside className="sidebar">
         <div className="brand-block">
-          <div className="brand-mark">MYC</div>
+          <div className="brand-mark" aria-label="MeYou Connect">
+            <img src="/myc-icon.svg" alt="" width="46" height="46" />
+          </div>
           <div>
             <strong>{canonicalSystem.brand}</strong>
             <p>{canonicalSystem.concept}</p>
@@ -30,11 +47,10 @@ export function AppShell({
         <nav className="nav-list" aria-label="เมนูหลัก">
           {navOrder.map((key) => {
             const item = modules[key];
-            const href = key === "dashboard" ? "/" : `/${key}`;
             return (
               <Link
                 key={key}
-                href={href}
+                href={moduleHref(key)}
                 className={`nav-item ${active === key ? "active" : ""}`}
               >
                 <span>{item.shortLabel}</span>
@@ -47,13 +63,28 @@ export function AppShell({
         <div className="sidebar-foot">
           <span className="status-dot" />
           <div>
-            <strong>Internal P0</strong>
-            <p>ไม่เปิด External Portal</p>
+            <strong>Founder PWA V0.1</strong>
+            <p>Internal only · Safe Mode</p>
           </div>
         </div>
       </aside>
 
-      <main className="main-area">{children}</main>
+      <main className="main-area">
+        <OfflineStatus />
+        {children}
+      </main>
+
+      <nav className="mobile-bottom-nav" aria-label="เมนูมือถือ">
+        {mobileNav.map(({ key, label, href }) => (
+          <Link
+            key={key}
+            href={href}
+            className={`mobile-bottom-item ${active === key ? "active" : ""}`}
+          >
+            <span>{label}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }
