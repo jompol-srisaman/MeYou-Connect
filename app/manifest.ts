@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "MeYou Connect Founder Operating System",
     start_url: "/",
     display: "standalone",
-    background_color: "#f4f7f6",
-    theme_color: "#12261f",
+    background_color: "#f5f8fc",
+    theme_color: "#0F2D62",
     orientation: "portrait-primary",
     categories: ["business", "productivity"],
     icons: [
