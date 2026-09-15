@@ -1,0 +1,1 @@
+Placeholder marker for connector-safe binary upload. The actual PNG blobs are committed through the Git data API in the same branch and this marker can remain as provenance/audit evidence.
