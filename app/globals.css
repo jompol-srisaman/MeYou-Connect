@@ -21,10 +21,13 @@
 
   --success: #247a52;
   --success-soft: #e9f7ef;
+  --info: #245d94;
   --warn: #946216;
   --warn-soft: #fff6df;
   --danger: #a23d47;
   --danger-soft: #fff0f2;
+  --neutral: #5f6f82;
+  --neutral-soft: #edf1f5;
 
   --radius-sm: 12px;
   --radius-md: 16px;
@@ -39,11 +42,12 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: Arial, "Noto Sans Thai", system-ui, sans-serif;
+  font-family: "Noto Sans Thai", Tahoma, "Leelawadee UI", Arial, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
 p { margin: 0; }
+button, a { -webkit-tap-highlight-color: transparent; }
 
 .app-frame { min-height: 100vh; display: grid; grid-template-columns: 260px minmax(0, 1fr); }
 .sidebar {
@@ -65,20 +69,23 @@ p { margin: 0; }
   border-radius: 14px;
   display: grid;
   place-items: center;
-  background: var(--myc-gradient);
+  overflow: hidden;
+  background: var(--myc-navy);
   color: white;
   font-weight: 800;
   letter-spacing: .04em;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 8px 20px rgba(0,0,0,.12);
 }
+.brand-mark img { width: 46px; height: 46px; object-fit: cover; }
 .brand-block strong { display: block; font-size: 15px; }
 .brand-block p { margin-top: 4px; font-size: 11px; color: #b9c8dd; }
 .nav-list { display: grid; gap: 7px; }
 .nav-item {
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 13px;
+  padding: 10px 13px;
   border-radius: var(--radius-sm);
   color: #cad7e8;
   transition: 160ms ease;
@@ -90,10 +97,10 @@ p { margin: 0; }
   box-shadow: inset 0 0 0 1px rgba(22,199,193,.24);
 }
 .nav-item span { font-size: 14px; font-weight: 700; }
-.nav-item small { font-size: 10px; color: #9fb5cf; }
+.nav-item small { font-size: 11px; color: #b7c6d9; }
 .sidebar-foot { margin-top: auto; display: flex; gap: 10px; align-items: center; padding: 10px 8px; }
 .sidebar-foot strong { font-size: 12px; }
-.sidebar-foot p { color: #9fb5cf; font-size: 10px; margin-top: 3px; }
+.sidebar-foot p { color: #b7c6d9; font-size: 11px; margin-top: 3px; }
 .status-dot {
   width: 9px;
   height: 9px;
@@ -104,7 +111,7 @@ p { margin: 0; }
 
 .main-area { width: 100%; max-width: 1480px; padding: 34px 42px 64px; }
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
-.eyebrow { color: var(--myc-navy); font-size: 11px; font-weight: 800; letter-spacing: .13em; margin-bottom: 9px; }
+.eyebrow { color: var(--myc-navy); font-size: 11px; font-weight: 800; letter-spacing: .08em; margin-bottom: 9px; }
 h1 { margin: 0; font-size: clamp(30px, 4vw, 48px); letter-spacing: -.035em; line-height: 1.06; color: var(--myc-navy); }
 h2 { margin: 0; font-size: 19px; letter-spacing: -.01em; color: #19335f; }
 .page-subtitle { margin-top: 10px; max-width: 760px; color: var(--muted); font-size: 14px; line-height: 1.7; }
@@ -114,15 +121,16 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.01em; color: #19335f; }
   white-space: nowrap;
   border-radius: 999px;
   padding: 7px 11px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: .04em;
+  letter-spacing: .01em;
 }
 .source-pill { background: var(--brand-soft); color: #087e7a; }
 .readiness-ready { background: var(--success-soft); color: var(--success); }
-.readiness-partial { background: var(--warn-soft); color: var(--warn); }
+.readiness-partial { background: var(--sky-soft); color: var(--info); }
+.readiness-stale { background: var(--warn-soft); color: var(--warn); }
+.readiness-not_ready, .readiness-missing { background: var(--neutral-soft); color: var(--neutral); }
 .readiness-blocked { background: var(--danger-soft); color: var(--danger); }
-.readiness-missing { background: #edf1f5; color: #617083; }
 
 .notice {
   margin-bottom: 22px;
@@ -138,7 +146,7 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.01em; color: #19335f; }
 }
 .notice strong { display: block; font-size: 13px; color: var(--myc-navy); }
 .notice p { margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.55; }
-.notice > span { font-size: 10px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; }
+.notice > span { font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
 .notice-warning { background: var(--warn-soft); border-color: #eedaae; }
 .notice-warning > span { color: var(--warn); }
 .notice-danger { margin-top: 22px; background: var(--danger-soft); border-color: #f0cece; }
@@ -155,7 +163,7 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.01em; color: #19335f; }
 }
 .metric-card > span { color: var(--muted); font-size: 12px; }
 .metric-card strong { display: block; margin-top: 17px; font-size: 22px; color: var(--myc-navy); }
-.metric-card small { display: block; margin-top: 10px; color: #8492a6; font-size: 10px; }
+.metric-card small { display: block; margin-top: 10px; color: #8492a6; font-size: 11px; }
 .metric-pending { color: #65758a; font-size: 15px !important; font-weight: 700; }
 
 .two-column { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, .8fr); gap: 18px; margin-bottom: 18px; }
@@ -171,11 +179,11 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.01em; color: #19335f; }
 .module-row { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; padding: 15px 0; border-top: 1px solid var(--line); }
 .module-row:first-child { border-top: 0; }
 .module-row strong { font-size: 13px; color: var(--myc-navy); }
-.module-row p { margin-top: 5px; max-width: 700px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.module-row p { margin-top: 5px; max-width: 700px; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .detail-list { margin: 8px 0 0; }
 .detail-list > div { padding: 14px 0; border-top: 1px solid var(--line); }
 .detail-list > div:first-child { border-top: 0; }
-dt { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+dt { color: var(--muted); font-size: 11px; text-transform: none; letter-spacing: .01em; }
 dd { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 700; }
 .flow-panel { margin-top: 18px; }
 .flow-panel code {
@@ -237,7 +245,7 @@ dd { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 700
     padding: 7px 4px;
     border-radius: 14px;
     color: #cbd8e8;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     text-align: center;
   }
