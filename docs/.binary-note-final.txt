@@ -1,0 +1,1 @@
+No secrets or production changes. Binary PNG upload uses approved asset only.
