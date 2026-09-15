@@ -1,18 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { OfflineStatus } from "@/components/offline-status";
+import { ReadinessBadge, readinessLabel } from "@/components/data-state";
 import { canonicalSystem, modules, navOrder, type ModuleKey } from "@/lib/phase0";
 
-export type ShellActive = ModuleKey | "more";
+export { ReadinessBadge } from "@/components/data-state";
 
-function readinessLabel(readiness: string) {
-  if (readiness === "READY") return "พร้อม";
-  if (readiness === "PARTIAL") return "บางส่วน";
-  if (readiness === "STALE") return "ข้อมูลไม่ครบ/เก่า";
-  if (readiness === "NOT_READY") return "ยังไม่พร้อม";
-  if (readiness === "BLOCKED") return "ถูกบล็อก";
-  return readiness;
-}
+export type ShellActive = ModuleKey | "more";
 
 const mobileNav: Array<{ key: ShellActive; label: string; href: string }> = [
   { key: "dashboard", label: "หน้าแรก", href: "/" },
@@ -32,7 +26,7 @@ export function AppShell({ active, children }: { active: ShellActive; children: 
       <aside className="sidebar">
         <div className="brand-block">
           <div className="brand-mark" aria-label="MeYou Connect">
-            <img src="/myc-icon.svg" alt="" width="46" height="46" />
+            <img src="/myc-icon-192.png" alt="" width="46" height="46" />
           </div>
           <div>
             <strong>{canonicalSystem.brand}</strong>
@@ -49,7 +43,7 @@ export function AppShell({ active, children }: { active: ShellActive; children: 
             );
           })}
         </nav>
-        <div className="sidebar-foot"><span className="status-dot" /><div><strong>Founder PWA V0.1</strong><p>Official Read V1 · Preview</p></div></div>
+        <div className="sidebar-foot"><span className="status-dot" /><div><strong>MYC สำหรับ Founder</strong><p>รอบทดสอบ · อ่านข้อมูลอย่างเดียว</p></div></div>
       </aside>
       <main className="main-area"><OfflineStatus />{children}</main>
       <nav className="mobile-bottom-nav" aria-label="เมนูมือถือ">
@@ -61,7 +55,6 @@ export function AppShell({ active, children }: { active: ShellActive; children: 
   );
 }
 
-export function SourcePill({ children }: { children: ReactNode }) { return <span className="source-pill">{children}</span>; }
-export function ReadinessBadge({ readiness }: { readiness: string }) {
-  return <span className={`readiness readiness-${readiness.toLowerCase()}`}>{readinessLabel(readiness)}</span>;
+export function SourcePill({ children }: { children: ReactNode }) {
+  return <span className="source-pill">{children}</span>;
 }
