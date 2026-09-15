@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { OfflineStatus } from "@/components/offline-status";
-import { ReadinessBadge, readinessLabel } from "@/components/data-state";
+import { readinessLabel } from "@/components/data-state";
 import { canonicalSystem, modules, navOrder, type ModuleKey } from "@/lib/phase0";
 
 export { ReadinessBadge } from "@/components/data-state";
