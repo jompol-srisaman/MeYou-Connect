@@ -10,7 +10,13 @@ export const metadata: Metadata = {
   description: "MeYou Connect Founder Operating System",
   applicationName: "MYC",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/myc-icon.svg", apple: "/myc-icon.svg" },
+  icons: {
+    icon: [
+      { url: "/myc-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/myc-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   appleWebApp: { capable: true, title: "MYC", statusBarStyle: "black-translucent" },
 };
 
