@@ -54,6 +54,7 @@ test("shared readiness and loading empty error UI are explicit", async () => {
     assert.ok(states.includes(label), `missing readiness label ${label}`);
   }
   for (const variant of ["loading", "empty", "error"]) assert.ok(states.includes(`"${variant}"`));
+  assert.ok(states.includes("ลองใหม่"), "shared error UI must offer retry action");
   assert.ok(panel.includes("<DataState"));
 });
 
