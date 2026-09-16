@@ -56,6 +56,10 @@ export function DataState({
   action?: ReactNode;
 }) {
   const role = variant === "error" ? "alert" : "status";
+  const resolvedAction = action ?? (variant === "error" ? (
+    <a className="secondary-button" href="" aria-label="ลองโหลดข้อมูลอีกครั้ง">ลองใหม่</a>
+  ) : null);
+
   return (
     <div className={`data-state data-state-${variant}`} role={role} aria-live="polite">
       <span className="data-state-symbol" aria-hidden="true">{STATE_SYMBOL[variant]}</span>
@@ -63,7 +67,7 @@ export function DataState({
         <strong>{title}</strong>
         {description ? <p>{description}</p> : null}
       </div>
-      {action ? <div className="data-state-action">{action}</div> : null}
+      {resolvedAction ? <div className="data-state-action">{resolvedAction}</div> : null}
     </div>
   );
 }
