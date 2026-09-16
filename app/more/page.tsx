@@ -44,6 +44,17 @@ export default function MorePage() {
         ))}
       </section>
 
+      <section className="panel install-help-panel">
+        <p className="eyebrow">ติดตั้งบน Android</p>
+        <h2>เพิ่ม MYC ไว้ที่หน้าจอมือถือ</h2>
+        <ol className="compact-list">
+          <li>เปิดหน้า MYC ด้วย Chrome</li>
+          <li>แตะเมนู ⋮ มุมขวาบน</li>
+          <li>เลือก “ติดตั้งแอป” หรือ “เพิ่มลงในหน้าจอหลัก”</li>
+        </ol>
+        <p className="safe-note">เมื่อติดตั้งแล้วจะเปิดแบบแอปเต็มหน้าจอ ข้อมูลที่ต้องอัปเดตยังต้องใช้อินเทอร์เน็ต และระบบจะไม่เก็บคำตอบจาก API ไว้ในแคช</p>
+      </section>
+
       <section className="panel future-panel">
         <p className="eyebrow">เตรียมไว้สำหรับอนาคต</p>
         <h2>ส่วนที่ยังไม่เปิดใช้งาน</h2>
