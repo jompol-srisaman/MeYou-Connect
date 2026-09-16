@@ -122,9 +122,10 @@ test("mobile UX enforces readable labels and 44px plus tap targets", async () =>
   assert.match(pwa, /\.mobile-bottom-item\s*\{[\s\S]*?min-height:\s*48px[\s\S]*?font-size:\s*12px/);
 });
 
-test("PWA manifest and Apple metadata use explicit approved PNG icons", async () => {
+test("PWA manifest, install help, and Apple metadata use approved PNG icons", async () => {
   const manifest = await read("app/manifest.ts");
   const layout = await read("app/layout.tsx");
+  const more = await read("app/more/page.tsx");
   assert.ok(manifest.includes('/myc-icon-192.png'));
   assert.ok(manifest.includes('/myc-icon-512.png'));
   assert.match(manifest, /sizes:\s*"192x192"/);
@@ -133,6 +134,8 @@ test("PWA manifest and Apple metadata use explicit approved PNG icons", async ()
   assert.ok(layout.includes('/apple-touch-icon.png'));
   assert.match(layout, /sizes:\s*"180x180"/);
   assert.match(manifest, /display:\s*"standalone"/);
+  assert.ok(more.includes("ติดตั้งบน Android"));
+  assert.ok(more.includes("เพิ่มลงในหน้าจอหลัก"));
 });
 
 test("approved install icon files have exact dimensions", async () => {
