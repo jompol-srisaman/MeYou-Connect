@@ -56,13 +56,18 @@ Allowed technical decisions are `GRANTED`, `WITHDRAWN`, and `DECLINED`.
 
 The technical mirror does **not** currently contain an explicit consent-form/version field. This must not be fabricated; authoritative Data Hub version/evidence is required before an automated submit decision can be READY.
 
-## Current live gate — 2026-09-16
+## Current live gate — 2026-09-19
 
+Authoritative Google Data Hub read-back of `14_Consent_PDPA` succeeded.
+
+- authoritative Data Hub rows: `0`
+- `datahub_readback_verified = TRUE`
+- read readiness: `READY`
+- reason: `AUTHORITATIVE_SOURCE_READ_VERIFIED_EMPTY`
 - technical `privacy.consents` rows: `0`
-- `ops.consent_readiness_v.datahub_readback_verified = FALSE`
-- `ops.consent_readiness_v.auto_submit_allowed = FALSE`
-- readiness: `NOT_READY`
-- reason: `DATA_HUB_CONSENT_READBACK_REQUIRED`
+- `AUTO_SUBMIT = FALSE`
+
+This distinction is intentional: an empty authoritative source is a successful read, but it supplies no consent grant. Automation remains fail-closed until a current explicit `GRANTED` record with the required purpose/evidence/version exists.
 
 ## Engineering lookup rule
 
