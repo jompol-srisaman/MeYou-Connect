@@ -19,24 +19,100 @@ export class SourceReadError extends Error {
 const base64Url = (value: string | Buffer) =>
   Buffer.from(value).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 
+function validServiceAccount(value: unknown): GoogleServiceAccount | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as { client_email?: unknown; private_key?: unknown };
+  if (typeof candidate.client_email !== "string" || typeof candidate.private_key !== "string") return null;
+  const client_email = candidate.client_email.trim();
+  const private_key = candidate.private_key.replace(/\\\\n/g, "\n").trim();
+  if (!client_email || !private_key.includes("PRIVATE KEY")) return null;
+  return { client_email, private_key };
+}
+
+function escapeControlNewlinesInsideJsonStrings(value: string) {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (const char of value) {
+    if (escaped) {
+      out += char;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\\\" && inString) {
+      out += char;
+      escaped = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      out += char;
+      continue;
+    }
+    if (inString && (char === "\n" || char === "\r")) {
+      out += "\\n";
+      continue;
+    }
+    out += char;
+  }
+  return out;
+}
+
+function parseServiceAccountValue(raw: string): GoogleServiceAccount | null {
+  const queue: string[] = [raw.trim()];
+  const seen = new Set<string>();
+
+  while (queue.length) {
+    const current = queue.shift()!;
+    if (!current || seen.has(current) || seen.size > 8) continue;
+    seen.add(current);
+
+    if (current.startsWith("'") && current.endsWith("'") && current.length > 2) {
+      queue.push(current.slice(1, -1).trim());
+    }
+    if (current.includes('\\\"') && !current.includes('":')) {
+      queue.push(current.replace(/\\\\"/g, '"'));
+    }
+    if (current.includes("\n") || current.includes("\r")) {
+      queue.push(escapeControlNewlinesInsideJsonStrings(current));
+    }
+
+    try {
+      const parsed = JSON.parse(current) as unknown;
+      const credential = validServiceAccount(parsed);
+      if (credential) return credential;
+      if (typeof parsed === "string") queue.push(parsed.trim());
+    } catch {
+      // Try only bounded, deterministic representation normalizations above.
+    }
+
+    if (/^[A-Za-z0-9+/_=-]+$/.test(current) && current.length > 100) {
+      try {
+        const decoded = Buffer.from(current.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8").trim();
+        if (decoded.startsWith("{") || decoded.startsWith('"') || decoded.startsWith("'")) queue.push(decoded);
+      } catch {
+        // Invalid base64 is not accepted.
+      }
+    }
+  }
+  return null;
+}
+
 function parseServiceAccount(): GoogleServiceAccount | null {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as { client_email?: string; private_key?: string };
-      if (parsed.client_email && parsed.private_key) return { client_email: parsed.client_email, private_key: parsed.private_key };
-    } catch {
-      throw new SourceReadError(
-        "GOOGLE_DATA_HUB_AUTH_INVALID",
-        "GOOGLE_SERVICE_ACCOUNT_JSON is not valid service-account JSON.",
-        "MEYOU_CONNECT_MVP_DATA_HUB_V1",
-      );
-    }
+    const parsed = parseServiceAccountValue(raw);
+    if (parsed) return parsed;
+    throw new SourceReadError(
+      "GOOGLE_DATA_HUB_AUTH_INVALID",
+      "GOOGLE_SERVICE_ACCOUNT_JSON is not a valid supported service-account representation.",
+      "MEYOU_CONNECT_MVP_DATA_HUB_V1",
+    );
   }
 
   const client_email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const private_key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  if (client_email && private_key) return { client_email, private_key };
+  if (client_email && private_key?.includes("PRIVATE KEY")) return { client_email, private_key };
   return null;
 }
 
