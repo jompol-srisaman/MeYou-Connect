@@ -20,8 +20,8 @@ export function OfflineStatus() {
 
   return (
     <div className="offline-banner" role="status" aria-live="polite">
-      <strong>ออฟไลน์</strong>
-      <span>อ่านหน้าที่เคยเปิดได้เท่านั้น · การเปลี่ยนข้อมูลถูกปิดและต้องตรวจซ้ำเมื่อออนไลน์</span>
+      <strong>ตอนนี้ออฟไลน์</strong>
+      <span>ดูข้อมูลที่เคยเปิดได้ แต่ยังแก้ไขข้อมูลไม่ได้จนกว่าจะกลับมาออนไลน์</span>
     </div>
   );
 }

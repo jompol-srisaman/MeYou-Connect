@@ -1,4 +1,4 @@
-export type Readiness = "READY" | "PARTIAL" | "MISSING" | "BLOCKED";
+import type { Readiness } from "@/lib/platform/contracts";
 
 export type ModuleKey =
   | "dashboard"
@@ -21,7 +21,7 @@ export const canonicalSystem = {
   },
   supabase: {
     projectRef: "pgjmxdeafzogzsyawejs",
-    role: "TEST_SHADOW_AND_TECHNICAL_INTEGRATION",
+    role: "TECHNICAL_AUTHORITY_ONLY_IN_P0",
   },
   vercel: {
     projectName: "me-you-connect",
@@ -46,57 +46,57 @@ export const modules: Record<
     label: "Founder Dashboard",
     shortLabel: "ภาพรวม",
     readiness: "PARTIAL",
-    summary: "UI foundation พร้อมเริ่ม แต่ยังไม่ผูก Operational Source แบบ live",
-    source: "Data Hub (official) + Supabase technical health",
-    next: "ต่อ approved read adapter และแสดง freshness ทุก metric",
+    summary: "Official Read V1 binding ทำงานแบบ governed composition; readiness จริงมาจาก endpoint",
+    source: "COMPOSITE_GOVERNED",
+    next: "ใช้ live readiness จาก /api/v1/read/founder/today",
   },
   candidates: {
     label: "Candidate Operations",
     shortLabel: "Candidate",
-    readiness: "BLOCKED",
-    summary: "หน้าใช้งานสร้างได้ แต่ live candidate promotion มี downstream DQ ที่ทีม Data เป็นเจ้าของ",
-    source: "Data Hub Candidate Master",
-    next: "รอ canonical downstream fix; ห้ามสร้าง pipeline คู่ขนาน",
+    readiness: "STALE",
+    summary: "Data Hub อ่านได้ แต่ต้องแสดง STALE เมื่อ promotion guard ยังพบ unverified Raw linkage",
+    source: "Data Hub Candidate Master + ops.candidate_promotion_gap_v guard",
+    next: "ห้าม claim completeness จน UNPROMOTED_RAW_GAP เป็นศูนย์",
   },
   jobs: {
     label: "Job / Factory",
     shortLabel: "งาน",
     readiness: "PARTIAL",
-    summary: "มี canonical Job Master และ Supabase read API foundation แล้ว",
+    summary: "Canonical Job Master ผูกผ่าน server-side Official Read V1",
     source: "Data Hub Job Master",
-    next: "ต่อ official read adapter และใช้ Part 4 API contract เมื่อเหมาะสม",
+    next: "ใช้ runtime readiness; missing header/auth ต้อง NOT_READY",
   },
   inbox: {
     label: "Unified Inbox",
     shortLabel: "Inbox",
     readiness: "PARTIAL",
-    summary: "LINE Raw/Event มีอยู่จริง แต่หน้า Inbox ยังต้องต่อ approved read surface และ verified entity links",
-    source: "Supabase Raw/Event technical surface + Data Hub entity authority",
-    next: "แสดง thread/source/text/image/file/DQ แบบ read-only ก่อนเปิด controlled actions",
+    summary: "LINE Inbox ใช้ Supabase technical authority แบบ read-only และ redacted",
+    source: "ops.line_inbox_v",
+    next: "Data Manager ต้องยืนยัน read projection/grant ให้ตรง Contract V1",
   },
   clients: {
     label: "Client / B2B",
     shortLabel: "Client",
     readiness: "PARTIAL",
-    summary: "มี Client Master, authz และ Client Demand Lite technical foundation",
+    summary: "Client Master อ่านผ่าน Data Hub server adapter; contact PII ถูก redacted",
     source: "Data Hub Client Master",
-    next: "ทำ read workspace ก่อนเปิด controlled writes",
+    next: "เปิด sensitive detail หลัง authenticated permission context เท่านั้น",
   },
   partners: {
     label: "Partner Management",
     shortLabel: "Partner",
     readiness: "PARTIAL",
-    summary: "มี Partner Master, attribution model และ purpose-scoped portal projection foundation",
+    summary: "Partner Master อ่านผ่าน Data Hub server adapter; phone/LINE ไม่ออก browser ใน Preview",
     source: "Data Hub Partner Master",
-    next: "ทำ read workspace และ attribution evidence view",
+    next: "คง evidence/attribution trace โดยไม่เปิด write action",
   },
   system: {
     label: "AI / System Health",
     shortLabel: "ระบบ",
     readiness: "PARTIAL",
-    summary: "Supabase มี event/worker/observability/LINE foundations แต่ Web UI ยังไม่มี",
-    source: "Supabase technical surfaces + Data Hub DQ",
-    next: "ต่อ health/readiness read APIs โดยไม่เปิด production gates",
+    summary: "Operations/worker/backlog/promotion guard อ่านจาก Supabase technical surfaces",
+    source: "SUPABASE_TECHNICAL",
+    next: "แสดง NOT_STARTED ตามจริงและไม่ตีความเป็น healthy",
   },
 };
 

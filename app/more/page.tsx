@@ -5,10 +5,19 @@ import { featureFlags } from "@/lib/platform/feature-flags";
 import { moduleRegistry } from "@/lib/platform/module-registry";
 
 const operations = [
-  ["Client / B2B", "/clients", modules.clients.readiness],
-  ["Partner", "/partners", modules.partners.readiness],
-  ["System", "/system", modules.system.readiness],
+  ["ลูกค้า", "/clients", modules.clients.readiness],
+  ["พาร์ตเนอร์", "/partners", modules.partners.readiness],
+  ["ระบบ", "/system", modules.system.readiness],
 ] as const;
+
+const plannedLabels: Record<string, string> = {
+  finance: "การเงิน",
+  payroll: "ค่าตอบแทนทีม",
+  accounting: "บัญชี",
+  "ai-matching": "จับคู่งานด้วย AI",
+  "partner-portal": "พื้นที่พาร์ตเนอร์",
+  "candidate-portal": "พื้นที่ผู้สมัคร",
+};
 
 export default function MorePage() {
   const planned = moduleRegistry.filter((item) => item.stage === "PLANNED");
@@ -17,9 +26,9 @@ export default function MorePage() {
     <AppShell active="more">
       <header className="page-header compact-page-header">
         <div>
-          <p className="eyebrow">MORE</p>
+          <p className="eyebrow">เมนูอื่น</p>
           <h1>เมนูเพิ่มเติม</h1>
-          <p className="page-subtitle">งานรองและโมดูลอนาคตอยู่ที่นี่ เพื่อให้หน้า Founder Today และเมนูมือถือหลักยังเรียบง่าย</p>
+          <p className="page-subtitle">รวมงานที่ใช้น้อยกว่าและส่วนที่เตรียมไว้สำหรับอนาคต เพื่อให้เมนูหลักใช้งานง่ายบนมือถือ</p>
         </div>
       </header>
 
@@ -28,24 +37,35 @@ export default function MorePage() {
           <Link href={href} className="more-card" key={href}>
             <div>
               <strong>{label}</strong>
-              <p>เปิด workspace</p>
+              <p>เปิดดู</p>
             </div>
             <ReadinessBadge readiness={readiness} />
           </Link>
         ))}
       </section>
 
+      <section className="panel install-help-panel">
+        <p className="eyebrow">ติดตั้งบน Android</p>
+        <h2>เพิ่ม MYC ไว้ที่หน้าจอมือถือ</h2>
+        <ol className="compact-list">
+          <li>เปิดหน้า MYC ด้วย Chrome</li>
+          <li>แตะเมนู ⋮ มุมขวาบน</li>
+          <li>เลือก “ติดตั้งแอป” หรือ “เพิ่มลงในหน้าจอหลัก”</li>
+        </ol>
+        <p className="safe-note">เมื่อติดตั้งแล้วจะเปิดแบบแอปเต็มหน้าจอ ข้อมูลที่ต้องอัปเดตยังต้องใช้อินเทอร์เน็ต และระบบจะไม่เก็บคำตอบจาก API ไว้ในแคช</p>
+      </section>
+
       <section className="panel future-panel">
-        <p className="eyebrow">MODULAR ROADMAP</p>
-        <h2>โมดูลที่เตรียมขอบเขตไว้แล้ว แต่ยังไม่เปิด</h2>
+        <p className="eyebrow">เตรียมไว้สำหรับอนาคต</p>
+        <h2>ส่วนที่ยังไม่เปิดใช้งาน</h2>
         <div className="future-module-list">
           {planned.map((item) => (
             <div className="future-module-row" key={item.id}>
               <div>
-                <strong>{item.label}</strong>
-                <p>{item.contract}</p>
+                <strong>{plannedLabels[item.id] ?? item.label}</strong>
+                <p>จะเปิดเมื่อผ่านการตรวจและพร้อมใช้งาน</p>
               </div>
-              <span className="state-chip">{featureFlags[item.flag] ? "ON" : "OFF"}</span>
+              <span className="state-chip">{featureFlags[item.flag] ? "เปิด" : "ปิด"}</span>
             </div>
           ))}
         </div>

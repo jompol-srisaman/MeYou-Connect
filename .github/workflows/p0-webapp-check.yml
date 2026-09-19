@@ -15,6 +15,7 @@ on:
     branches:
       - "feat/p0-internal-ops-shell"
       - "feat/pwa-v0-1-founder-usable"
+      - "feat/p0-official-read-bind"
     paths:
       - "app/**"
       - "components/**"
@@ -31,7 +32,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,3 +43,13 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Built-server Official Read V1 smoke
+        run: |
+          npm start > /tmp/myc-next.log 2>&1 &
+          echo $! > /tmp/myc-next.pid
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3000/ > /dev/null; then break; fi
+            sleep 1
+          done
+          npm run test:endpoints
+          kill $(cat /tmp/myc-next.pid) || true

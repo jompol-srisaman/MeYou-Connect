@@ -1,0 +1,1 @@
+MYC PWA install icons are exact resized exports from the approved Google Drive asset `09_MYC_Profile_Icon_Navy_1024.png` (Drive file ID: 1iiZbYra6u0x577_aHrHR2cruLuqML2mV). No logo geometry, colors, or composition were redrawn or changed. Required output sizes: 192x192, 512x512, Apple Touch Icon 180x180.
