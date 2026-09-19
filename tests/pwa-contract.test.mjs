@@ -143,3 +143,28 @@ test("approved install icon files have exact dimensions", async () => {
   assert.deepEqual(pngSize(await readBytes("public/myc-icon-512.png")), [512, 512]);
   assert.deepEqual(pngSize(await readBytes("public/apple-touch-icon.png")), [180, 180]);
 });
+
+
+test("Candidate per-record readiness is separate from inventory completeness and lifecycle actions fail closed", async () => {
+  const contract = await read("lib/platform/contracts.ts");
+  const provider = await read("lib/data/official-read.ts");
+  assert.ok(contract.includes("candidate_inventory_completeness"));
+  assert.ok(provider.includes("per_candidate_record_readiness"));
+  assert.ok(provider.includes("LIFECYCLE_EVIDENCE_REVIEW_REQUIRED"));
+  assert.ok(provider.includes('lifecycle_evidence_state: lifecycleNeedsEvidenceReview ? "REVIEW"'));
+  assert.ok(provider.includes("lifecycle_action_unlock_allowed: false"));
+  assert.ok(provider.includes('readiness: gap.unverifiedCount > 0 ? "STALE" : "READY"'));
+  assert.ok(provider.includes('const perRecordReadiness: Readiness = lifecycleNeedsEvidenceReview ? "PARTIAL" : "READY"'));
+});
+
+test("Preview read-gate acceptance runner is live-HTTP only, Preview-only, and emits sanitized summaries", async () => {
+  const runner = await read("app/read-gate-acceptance/page.tsx");
+  assert.ok(runner.includes('process.env.VERCEL_ENV !== "preview"'));
+  assert.ok(runner.includes("fetch(origin + path"));
+  assert.ok(runner.includes('cache: "no-store"'));
+  assert.ok(runner.includes('redirect: "manual"'));
+  assert.ok(runner.includes("pii_secret_leak_detected"));
+  assert.ok(runner.includes("lifecycle_action_unlock_true_count"));
+  assert.ok(!runner.includes("SUPABASE_SERVICE_ROLE_KEY"));
+  assert.ok(!runner.includes("GOOGLE_SERVICE_ACCOUNT_JSON"));
+});

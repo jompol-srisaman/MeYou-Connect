@@ -41,11 +41,21 @@ export interface ReadWarningV1 {
   count?: number;
 }
 
+export interface CandidateInventoryCompletenessV1 {
+  readiness: Extract<Readiness, "READY" | "STALE">;
+  reason_code?: string;
+  unverified_count: number;
+  verified_count: number;
+  newest_unverified_at: string | null;
+  observed_at: string | null;
+}
+
 export interface ReadEnvelopeV1<T> extends ReadMetaV1 {
   contract_version: "v1";
   interface_key: string;
   generated_at: string;
   data: T | null;
+  candidate_inventory_completeness?: CandidateInventoryCompletenessV1;
   warnings: ReadWarningV1[];
 }
 

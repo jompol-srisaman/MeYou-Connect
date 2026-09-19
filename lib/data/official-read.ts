@@ -1,5 +1,6 @@
 import {
   OFFICIAL_READ_FRESHNESS_SECONDS,
+  type CandidateInventoryCompletenessV1,
   type FreshnessV1,
   type ReadEnvelopeV1,
   type ReadRecordV1,
@@ -44,6 +45,7 @@ function envelope<T>(a: {
   interfaceKey: string; canonicalId: string; authority: SourceAuthority; sourceRef: string;
   observedAt: string | null; maxAgeSeconds: number; readiness: Readiness; data: T | null;
   updatedAt?: string | null; reasonCode?: string; warnings?: ReadWarningV1[];
+  candidateInventoryCompleteness?: CandidateInventoryCompletenessV1;
 }): ReadEnvelopeV1<T> {
   const f = freshness(a.observedAt, a.maxAgeSeconds);
   const readiness = f.state === "STALE" && a.readiness === "READY" ? "STALE" : a.readiness;
@@ -51,7 +53,9 @@ function envelope<T>(a: {
     contract_version: "v1", interface_key: a.interfaceKey, generated_at: now(),
     canonical_id: a.canonicalId, source_authority: a.authority, source_ref: a.sourceRef,
     updated_at: a.updatedAt ?? null, freshness: f, readiness,
-    ...(a.reasonCode ? { reason_code: a.reasonCode } : {}), data: a.data, warnings: a.warnings ?? [],
+    ...(a.reasonCode ? { reason_code: a.reasonCode } : {}), data: a.data,
+    ...(a.candidateInventoryCompleteness ? { candidate_inventory_completeness: a.candidateInventoryCompleteness } : {}),
+    warnings: a.warnings ?? [],
   };
 }
 
@@ -94,19 +98,95 @@ export async function readCandidates(candidateId?: string) {
   const sourceRef = "MEYOU_CONNECT_MVP_DATA_HUB_V1/01_Candidate";
   try {
     const [source, gap] = await Promise.all([hub("candidate"), gapGuard()]);
-    let readiness: Readiness = "READY";
-    let reasonCode: string | undefined;
-    const warnings: ReadWarningV1[] = [{ code: "SENSITIVE_FIELDS_REDACTED", message: "Candidate phone/LINE and other sensitive fields stay server-redacted until authenticated permission context is active." }];
+    const inventoryCompleteness: CandidateInventoryCompletenessV1 = {
+      readiness: gap.unverifiedCount > 0 ? "STALE" : "READY",
+      ...(gap.unverifiedCount > 0 ? { reason_code: "UNPROMOTED_RAW_GAP" } : {}),
+      unverified_count: gap.unverifiedCount,
+      verified_count: gap.verifiedCount,
+      newest_unverified_at: gap.newestUnverifiedAt,
+      observed_at: gap.observedAt,
+    };
+    const warnings: ReadWarningV1[] = [{
+      code: "SENSITIVE_FIELDS_REDACTED",
+      message: "Candidate phone/LINE and other sensitive fields stay server-redacted until authenticated permission context is active.",
+    }];
     if (gap.unverifiedCount > 0) {
-      readiness = "STALE"; reasonCode = "UNPROMOTED_RAW_GAP";
-      warnings.unshift({ code: "UNPROMOTED_RAW_GAP", message: "Data Hub rows are readable, but Candidate completeness cannot be claimed while Raw→Master linkage remains unverified.", count: gap.unverifiedCount });
+      warnings.unshift({
+        code: "UNPROMOTED_RAW_GAP",
+        message: "Data Hub rows are readable, but Candidate inventory completeness cannot be claimed while Raw→Master linkage remains unverified.",
+        count: gap.unverifiedCount,
+      });
     }
-    const rows = source.records.map((r) => rec(str(r.canonical_id) ?? "READ:v1:candidate.unknown", source.sourceRef, source.observedAt, {
-      display_name: str(r.display_name), nickname: str(r.nickname), province: str(r.province), current_location: str(r.current_location), age: scalar(r.age), education: str(r.education), experience: str(r.experience), preferred_job: str(r.preferred_job), expected_income: str(r.expected_income), shift_preference: str(r.shift_preference), relocation_ready: str(r.relocation_ready), ready_date: str(r.ready_date), has_vehicle: str(r.has_vehicle), dorm_needed: str(r.dorm_needed), dorm_budget: str(r.dorm_budget), documents_ready: str(r.documents_ready), medical_ready: str(r.medical_ready), source_type: str(r.source_type), partner_id: str(r.partner_id), status: str(r.status), last_contact: str(r.last_contact), next_action: str(r.next_action), consent_status: str(r.consent_status), notes: str(r.notes),
-    }, iso(r.updated_at), readiness, reasonCode));
+
+    let lifecycleReviewCount = 0;
+    const rows = source.records.map((r) => {
+      const status = str(r.status);
+      const normalizedStatus = status?.toUpperCase() ?? "";
+      const lifecycleNeedsEvidenceReview = normalizedStatus === "APPLIED" || normalizedStatus === "NO_SHOW";
+      const perRecordReadiness: Readiness = lifecycleNeedsEvidenceReview ? "PARTIAL" : "READY";
+      if (lifecycleNeedsEvidenceReview) lifecycleReviewCount += 1;
+      return rec(
+        str(r.canonical_id) ?? "READ:v1:candidate.unknown",
+        source.sourceRef,
+        source.observedAt,
+        {
+          display_name: str(r.display_name), nickname: str(r.nickname), province: str(r.province), current_location: str(r.current_location), age: scalar(r.age), education: str(r.education), experience: str(r.experience), preferred_job: str(r.preferred_job), expected_income: str(r.expected_income), shift_preference: str(r.shift_preference), relocation_ready: str(r.relocation_ready), ready_date: str(r.ready_date), has_vehicle: str(r.has_vehicle), dorm_needed: str(r.dorm_needed), dorm_budget: str(r.dorm_budget), documents_ready: str(r.documents_ready), medical_ready: str(r.medical_ready), source_type: str(r.source_type), partner_id: str(r.partner_id), status, last_contact: str(r.last_contact), next_action: str(r.next_action), consent_status: str(r.consent_status), notes: str(r.notes),
+          per_candidate_record_readiness: perRecordReadiness,
+          lifecycle_evidence_state: lifecycleNeedsEvidenceReview ? "REVIEW" : "NOT_REQUIRED_BY_CURRENT_STATUS",
+          lifecycle_action_unlock_allowed: false,
+        },
+        iso(r.updated_at),
+        perRecordReadiness,
+        lifecycleNeedsEvidenceReview ? "LIFECYCLE_EVIDENCE_REVIEW_REQUIRED" : undefined,
+      );
+    });
+
     const data = candidateId ? rows.find((r) => r.canonical_id === candidateId) ?? null : rows;
-    return envelope({ interfaceKey, canonicalId, authority: "GOOGLE_SHEETS_DRIVE", sourceRef, observedAt: source.observedAt, maxAgeSeconds: 300, readiness: candidateId && !data ? "NOT_READY" : readiness, reasonCode: candidateId && !data ? "RECORD_NOT_FOUND" : reasonCode, data, warnings: candidateId && !data ? [{ code: "RECORD_NOT_FOUND", message: "Candidate ID is not present in Data Hub." }, ...warnings] : warnings });
-  } catch (error) { return failure({ interfaceKey, canonicalId, authority: "GOOGLE_SHEETS_DRIVE", sourceRef, maxAgeSeconds: 300, error }); }
+    const selectedLifecycleReviewCount = candidateId
+      ? data?.reason_code === "LIFECYCLE_EVIDENCE_REVIEW_REQUIRED" ? 1 : 0
+      : lifecycleReviewCount;
+    if (selectedLifecycleReviewCount > 0) {
+      warnings.push({
+        code: "LIFECYCLE_EVIDENCE_REVIEW_REQUIRED",
+        message: "APPLIED/NO_SHOW lifecycle labels do not unlock downstream actions until the required evidence gate is verified; treat them as REVIEW/DQ.",
+        count: selectedLifecycleReviewCount,
+      });
+    }
+
+    const notFound = Boolean(candidateId && !data);
+    const envelopeReadiness: Readiness = notFound
+      ? "NOT_READY"
+      : gap.unverifiedCount > 0
+        ? "STALE"
+        : data && !Array.isArray(data) && data.readiness === "PARTIAL"
+          ? "PARTIAL"
+          : "READY";
+    const reasonCode = notFound
+      ? "RECORD_NOT_FOUND"
+      : gap.unverifiedCount > 0
+        ? "UNPROMOTED_RAW_GAP"
+        : data && !Array.isArray(data) && data.reason_code
+          ? data.reason_code
+          : undefined;
+
+    return envelope({
+      interfaceKey,
+      canonicalId,
+      authority: "GOOGLE_SHEETS_DRIVE",
+      sourceRef,
+      observedAt: source.observedAt,
+      maxAgeSeconds: 300,
+      readiness: envelopeReadiness,
+      reasonCode,
+      data,
+      candidateInventoryCompleteness: inventoryCompleteness,
+      warnings: notFound
+        ? [{ code: "RECORD_NOT_FOUND", message: "Candidate ID is not present in Data Hub." }, ...warnings]
+        : warnings,
+    });
+  } catch (error) {
+    return failure({ interfaceKey, canonicalId, authority: "GOOGLE_SHEETS_DRIVE", sourceRef, maxAgeSeconds: 300, error });
+  }
 }
 
 function safeJob(r: Row) { return { client_id: str(r.client_id), company: str(r.company), province: str(r.province), location: str(r.location), position: str(r.position), headcount: scalar(r.headcount), wage: str(r.wage), ot: str(r.ot), shift: str(r.shift), benefits: str(r.benefits), required_qualification: str(r.required_qualification), documents: str(r.documents), medical_requirement: str(r.medical_requirement), dorm_available: str(r.dorm_available), transport_available: str(r.transport_available), application_date: str(r.application_date), start_date: str(r.start_date), milestone: str(r.milestone), payment_term: str(r.payment_term), contact_person: str(r.contact_person), status: str(r.status) }; }
