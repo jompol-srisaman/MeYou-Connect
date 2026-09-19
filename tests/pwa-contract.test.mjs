@@ -86,11 +86,12 @@ test("Founder Home binds only the governed server endpoint", async () => {
   assert.ok(!page.includes("supabase.co"));
 });
 
-test("Candidate guard forces STALE with UNPROMOTED_RAW_GAP internally", async () => {
+test("Candidate inventory guard forces STALE with UNPROMOTED_RAW_GAP without degrading every record", async () => {
   const provider = await read("lib/data/official-read.ts");
-  assert.match(provider, /readiness = "STALE"/);
-  assert.match(provider, /reasonCode = "UNPROMOTED_RAW_GAP"/);
+  assert.ok(provider.includes('readiness: gap.unverifiedCount > 0 ? "STALE" : "READY"'));
+  assert.ok(provider.includes('"UNPROMOTED_RAW_GAP"'));
   assert.match(provider, /candidate_promotion_gap_v/);
+  assert.ok(provider.includes("per_candidate_record_readiness"));
 });
 
 test("header mapping is alias-based and fail-closed", async () => {
