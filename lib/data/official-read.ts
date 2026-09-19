@@ -141,9 +141,10 @@ export async function readCandidates(candidateId?: string) {
       );
     });
 
-    const data = candidateId ? rows.find((r) => r.canonical_id === candidateId) ?? null : rows;
+    const selectedRecord = candidateId ? rows.find((r) => r.canonical_id === candidateId) ?? null : null;
+    const data = candidateId ? selectedRecord : rows;
     const selectedLifecycleReviewCount = candidateId
-      ? data?.reason_code === "LIFECYCLE_EVIDENCE_REVIEW_REQUIRED" ? 1 : 0
+      ? selectedRecord?.reason_code === "LIFECYCLE_EVIDENCE_REVIEW_REQUIRED" ? 1 : 0
       : lifecycleReviewCount;
     if (selectedLifecycleReviewCount > 0) {
       warnings.push({
@@ -158,15 +159,15 @@ export async function readCandidates(candidateId?: string) {
       ? "NOT_READY"
       : gap.unverifiedCount > 0
         ? "STALE"
-        : data && !Array.isArray(data) && data.readiness === "PARTIAL"
+        : selectedRecord?.readiness === "PARTIAL"
           ? "PARTIAL"
           : "READY";
     const reasonCode = notFound
       ? "RECORD_NOT_FOUND"
       : gap.unverifiedCount > 0
         ? "UNPROMOTED_RAW_GAP"
-        : data && !Array.isArray(data) && data.reason_code
-          ? data.reason_code
+        : selectedRecord?.reason_code
+          ? selectedRecord.reason_code
           : undefined;
 
     return envelope({
