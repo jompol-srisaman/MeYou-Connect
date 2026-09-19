@@ -70,7 +70,24 @@ function parseServiceAccountValue(raw: string): GoogleServiceAccount | null {
     if (current.startsWith("'") && current.endsWith("'") && current.length > 2) {
       queue.push(current.slice(1, -1).trim());
     }
-    if (current.includes('\\\"') && !current.includes('":')) {
+    if (current.startsWith("`") && current.endsWith("`") && current.length > 2) {
+      queue.push(current.slice(1, -1).trim());
+    }
+    const assignment = current.match(/^GOOGLE_SERVICE_ACCOUNT_JSON\s*=\s*(.+)$/s);
+    if (assignment?.[1]) queue.push(assignment[1].trim());
+    const firstBrace = current.indexOf("{");
+    const lastBrace = current.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace && (firstBrace > 0 || lastBrace < current.length - 1)) {
+      queue.push(current.slice(firstBrace, lastBrace + 1).trim());
+    }
+    if (/%7B|%22|%5Cn/i.test(current)) {
+      try {
+        queue.push(decodeURIComponent(current).trim());
+      } catch {
+        // Invalid percent encoding is not accepted.
+      }
+    }
+    if (current.includes('\\\"')) {
       queue.push(current.replace(/\\\\"/g, '"'));
     }
     if (current.includes("\n") || current.includes("\r")) {
