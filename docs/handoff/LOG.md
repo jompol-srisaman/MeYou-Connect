@@ -2,6 +2,16 @@
 
 รายการใหม่อยู่บนสุด (ดูรูปแบบใน `../AI_HANDOFF.md`)
 
+## 2026-10-02 — Claude — Money↔People linking, Finance/Partners tabs, Founder WebApp v5
+- Task: แก้ปัญหาที่ Founder พบว่า Dashboard ใช้งานจริงไม่ได้ — ไม่เห็นชื่อโรงงาน, ไม่เห็นหน้าการเงิน, "จบงานแล้ว" ไม่ขึ้น
+- Root cause ที่เจอ: เงินจริง (รับจาก Inaba, จ่ายค่าคอม Partner) ถูกบันทึกใน `22_Finance_Cashbook` เป็นข้อความบรรยายอิสระ (เช่น "อาทิตย์ ยิวคิม") ไม่ได้เลือกจาก Candidate ID — ระบบจึงจับคู่อัตโนมัติไม่ได้ และ `05_Placement`/`08_Revenue`/`10_Commission` ว่างเปล่าจริง (ธุรกิจไม่ได้ใช้ชีตเหล่านี้เลย)
+- Changes (Supabase): เพิ่ม `workplace_name` ใน jobs_v; แก้ `cashbook_v` (fix timestamp parsing bug ที่มี noncash note ต่อท้าย); เพิ่มตาราง `ops.cashbook_links` (tag เงิน↔Candidate/Partner, Supabase-only ไม่เขียนกลับ Sheets); เพิ่ม `dash.partners_payable_v`, `dash.list_cashbook/list_partners/list_partners_payable/link_cashbook_txn`; `candidates_v.completed_and_paid` เปลี่ยนมา derive จาก cashbook_links แทน Placement/Revenue ที่ว่างเปล่า
+- Changes (WebApp): เพิ่มแท็บ Finance (ดู+ผูกรายการเงินกับ Candidate/Partner) และแท็บ Partners (ยอดค้างจ่ายต่อคน); Jobs แสดงชื่อโรงงานจริง (Thai Inaba Foods, มุโต้ะ ฯลฯ)
+- Evidence: Partner 9 คนในระบบตรงกับชื่อใน Cashbook (มิ้นท์, อีฟ, หยก ฯลฯ); Cashbook 14 รายการ โหลดผ่าน RLS-gated RPC ได้ถูกต้อง
+- Gate state: ไม่แตะ safety gate ใดๆ; `ops.cashbook_links` เป็นชั้น tag เสริม ไม่ใช่ source of truth ใหม่
+- Next step: รอ Founder ผูกรายการ Cashbook ย้อนหลังทีละแถวผ่านเว็บ; พิจารณาเพิ่มคอลัมน์ Partner ใน `02_งาน_Job` ถ้าต้องการ track "ส่งงานให้ใคร"; ตั้งค่า ChatGPT Custom GPT Actions (endpoint `gpt-actions` deploy ไว้แล้ว รอ Founder ไปตั้งค่าในแอป ChatGPT)
+- Blockers / needs Founder: ตัดสินใจเรื่องคอลัมน์ Partner ใน Job sheet; ไปตั้งค่า Custom GPT เมื่อพร้อม
+
 ## 2026-09-29 — Claude — Shadow import live, Founder Dashboard v1 deployed
 - Task: เปิด shadow import gate (Founder-approved), deploy `datahub-shadow-import`, เพิ่ม Cashbook mapping, ตั้ง cron sync ทุก 5 นาที, สร้าง view `dash.founder_daily_v` + RBAC (deny-by-default), deploy WebApp v1 ไป Vercel `me-you-connect`
 - Changes: migrations หลายไฟล์ (`ops.migration_entity_map` เพิ่ม Cashbook, `dash` schema ใหม่ทั้งหมด, `ops.backup_runs` บันทึก manual snapshot), Edge Function `datahub-shadow-import` v0→v2, `public/index.html` (WebApp)
