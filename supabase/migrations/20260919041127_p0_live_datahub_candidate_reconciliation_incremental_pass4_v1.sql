@@ -1,0 +1,4 @@
+update ops.raw_inputs set metadata=coalesce(metadata,'{}'::jsonb)||jsonb_build_object(
+ 'candidate_reconciliation',jsonb_build_object('decision','ALREADY_IN_MASTER_LINK_MISSING','reason','LIVE_DATAHUB_01_CANDIDATE_EXACT_NAME_PHONE_MATCH_INCREMENTAL_DUPLICATE_REPRESENTATIVE','candidate_master_ref','MYC-C-000021','evidence_ref','GOOGLE_DATA_HUB:01_Candidate:2026-09-19T04:00Z:30_ROWS','accepted_at',now(),'accepted_by','DATA_AI_SYSTEM_MANAGER_V2','master_authority','GOOGLE_SHEETS_DRIVE','master_effect_required',false),
+ 'operational_master_effect',jsonb_build_object('sheet','01_Candidate','provider','GOOGLE_SHEETS_DRIVE','candidate_id','MYC-C-000021','verified_at',now(),'source_evidence','GOOGLE_DATA_HUB:01_Candidate:2026-09-19T04:00Z:30_ROWS')
+),updated_at=now() where raw_input_id='MYC-RAW-002170' and metadata#>>'{operational_master_effect,candidate_id}' is null;
