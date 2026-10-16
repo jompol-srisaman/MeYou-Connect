@@ -1,6 +1,8 @@
 # MYC P0 — Supabase Free database recovery (16 October 2026)
 
-**Status:** RUNBOOK / NOT EXECUTED. Founder-approved goal: restore the existing MYC project without new paid API, losing business data, or changing canonical architecture.
+**Historical baseline:** See [live recovery progress](MYC_RECOVERY_PROGRESS_20261016.md) for actions actually completed and current blockers. The destructive recovery procedure below has NOT been executed.
+
+**Status:** RECOVERY INCOMPLETE. Founder-approved goal: restore the existing MYC project without new paid API, losing business data, or changing canonical architecture.
 
 **Project:** `pgjmxdeafzogzsyawejs`. **Owner:** MYC Founder + MYC Engineer. **Related issue:** #28.
 
@@ -139,3 +141,4 @@ Then recheck database size, disk headroom, SQLSTATE read/write behavior, the sch
 Recovery is **DONE only if**: (1) source backup verified; (2) live DB <500MB with room to grow; (3) no read-only errors; (4) actual permitted write/read-back passes; (5) importer rate/retention fixed; (6) 24h growth test stays bounded; (7) LINE backfill and named ✅/❌ roster audit complete; (8) Founder receives an evidence-linked report.
 
 **Security:** Never put bank details, real candidate PII, LINE ID/contents, Supabase service-role credentials, database connection passwords, storage secrets, or backup blobs in GitHub.
+
