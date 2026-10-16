@@ -7,7 +7,7 @@ const PROJECT_REF = "pgjmxdeafzogzsyawejs";
 const DATA_HUB_ID = Deno.env.get("MYC_DATA_HUB_SPREADSHEET_ID") ?? "1o52Vpri7toZDviODQ12tpOoLgCs7Z5cYMmUZMc0Jeoc";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? `https://${PROJECT_REF}.supabase.co`;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const VERSION = "datahub-shadow-import-v2";
+const VERSION = "datahub-shadow-import-v3";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 const CREATED_BY = "claude:datahub-shadow-import";
 
@@ -112,6 +112,23 @@ function cellValue(v: unknown, isDate: boolean) {
 }
 const json = (b: unknown, status = 200) => Response.json(b, { status, headers: { "cache-control": "no-store" } });
 
+// Hash source content, never the invocation timestamp. Source row positions are
+// included because the existing reconciliation contract uses row numbers.
+async function snapshotRevision(keys: string[], plan: unknown, staged: unknown[]) {
+  const value = JSON.stringify({ version: VERSION, keys, plan, staged });
+  const bytes = new TextEncoder().encode(value);
+  if (staged.length > 1000 || bytes.byteLength > 2 * 1024 * 1024) throw new Error("SHADOW_INPUT_BUDGET_EXCEEDED");
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return { revision: `sha256:${Array.from(digest, b => b.toString(16).padStart(2, "0")).join("")}`, bytes: bytes.byteLength };
+}
+
+async function existingSnapshot(revision: string) {
+  const params = new URLSearchParams({ select: "session_id,status", source_system: "eq.GOOGLE_SHEETS", source_file_id: `eq.${DATA_HUB_ID}`, source_revision: `eq.${revision}`, order: "created_at.desc", limit: "1" });
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/shadow_import_sessions?${params}`, { headers: sbHeaders() });
+  if (!r.ok) throw new Error(`SHADOW_HISTORY_READ_FAILED:${r.status}`);
+  return ((await r.json()) as { session_id: string; status: string }[])[0];
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST" } });
   if (!(await verifyToken(req.headers.get("x-myc-invoke-token") ?? ""))) return json({ ok: false, error: "FORBIDDEN" }, 403);
@@ -138,8 +155,10 @@ Deno.serve(async (req: Request) => {
       return json({ ok: true, version: VERSION, headers: out });
     }
     if (body.mode === "import") {
-      const keys = (body.entities && body.entities.length ? body.entities : Object.keys(ENT)).filter((k) => ENT[k]);
-      const dryRun = body.dryRun === true;
+      if (body.entities && (!Array.isArray(body.entities) || body.entities.some(k => !ENT[k]))) return json({ ok: false, error: "UNKNOWN_ENTITY" }, 400);
+      const keys = [...new Set(body.entities && body.entities.length ? body.entities : Object.keys(ENT))].sort();
+      // Explicit opt-in is needed for writes, including after an accidental cron restart.
+      const dryRun = body.dryRun !== false;
       const snapshotAt = new Date().toISOString();
       const plan: Record<string, { sheet: string; rows: number; skippedEmpty: number; missingHeaders: string[] }> = {};
       const staged: { entity: string; row: number; pk: string | null; rec: Record<string, unknown> }[] = [];
@@ -167,13 +186,26 @@ Deno.serve(async (req: Request) => {
         }
         plan[k] = { sheet: e.sheet, rows: n, skippedEmpty: empty, missingHeaders: missing };
       }
-      if (dryRun) return json({ ok: true, version: VERSION, dryRun: true, plan });
+      const fingerprint = await snapshotRevision(keys, plan, staged);
+      if (dryRun) return json({ ok: true, version: VERSION, dryRun: true, plan, revision: fingerprint.revision });
+      if (Object.values(plan).some(p => p.missingHeaders.length)) return json({ ok: false, error: "SHADOW_SOURCE_SCHEMA_MISMATCH", plan }, 409);
+      const previous = await existingSnapshot(fingerprint.revision);
+      if (previous) {
+        if (!["VALIDATED", "RECONCILED"].includes(previous.status)) return json({ ok: false, error: "SHADOW_INCOMPLETE_SNAPSHOT_REQUIRES_REVIEW", sessionId: previous.session_id }, 409);
+        return json({ ok: true, version: VERSION, skipped: "UNCHANGED_SOURCE", sessionId: previous.session_id, plan });
+      }
 
       const sessionId = await rpc<string>("open_shadow_import_session", {
         p_source_system: "GOOGLE_SHEETS", p_source_file_id: DATA_HUB_ID, p_source_file_name: meta.properties?.title ?? "DATA_HUB",
-        p_source_revision: snapshotAt, p_snapshot_at: snapshotAt, p_source_of_truth: true, p_expected_entities: keys,
-        p_metadata: { function: VERSION, mode: "read_only_sheets_to_shadow", allowlisted_fields_only: true }, p_created_by: CREATED_BY,
+        p_source_revision: fingerprint.revision, p_snapshot_at: snapshotAt, p_source_of_truth: true, p_expected_entities: keys,
+        p_metadata: { function: VERSION, mode: "read_only_sheets_to_shadow", allowlisted_fields_only: true, guard_required: "v3", input_rows: staged.length, input_bytes: fingerprint.bytes }, p_created_by: CREATED_BY,
       });
+      // The matching DB patch stamps guard_applied. An unpatched DB fails closed.
+      const guard = await fetch(`${SUPABASE_URL}/rest/v1/shadow_import_sessions?session_id=eq.${sessionId}&select=metadata`, { headers: sbHeaders() });
+      if (!guard.ok) throw new Error("SHADOW_GUARD_READ_FAILED");
+      const guarded = (await guard.json()) as { metadata: { guard_applied?: string; database_bytes?: number } }[];
+      if (guarded[0]?.metadata?.guard_applied !== "v3") throw new Error("SHADOW_DATABASE_GUARD_NOT_INSTALLED");
+      if (Number(guarded[0]?.metadata?.database_bytes) >= 250 * 1024 * 1024) console.warn("MYC_SHADOW_CAPACITY_WARNING", { database_bytes: guarded[0].metadata.database_bytes });
       const CH = 10;
       for (let i = 0; i < staged.length; i += CH) {
         await Promise.all(staged.slice(i, i + CH).map((s) => rpc("stage_shadow_row", {
@@ -183,10 +215,13 @@ Deno.serve(async (req: Request) => {
       const validation = await rpc<Record<string, unknown>>("validate_shadow_session", { p_session_id: sessionId });
       const bad = await fetch(`${SUPABASE_URL}/rest/v1/shadow_import_rows?session_id=eq.${sessionId}&validation_status=neq.VALID&select=entity_key,source_row_number,source_pk,validation_status,validation_issues&limit=100`, { headers: sbHeaders() });
       const notValid = bad.ok ? await bad.json() : [{ error: `READ_${bad.status}` }];
-      return json({ ok: true, version: VERSION, sessionId, plan, validation, notValid });
+      return json({ ok: Number(validation.invalid ?? 0) === 0 && Number(validation.skipped ?? 0) === 0 && bad.ok, version: VERSION, sessionId, plan, validation, notValid });
     }
     return json({ ok: false, error: "UNKNOWN_MODE" }, 400);
   } catch (e) {
+    if (String(e).includes("SHADOW_SNAPSHOT_ALREADY_EXISTS")) return json({ ok: true, version: VERSION, skipped: "CONCURRENT_DUPLICATE" });
+    console.warn("MYC_SHADOW_IMPORT_STOPPED", { version: VERSION, error: String(e).slice(0, 400) });
     return json({ ok: false, version: VERSION, error: String(e).slice(0, 400) }, 503);
   }
 });
+
