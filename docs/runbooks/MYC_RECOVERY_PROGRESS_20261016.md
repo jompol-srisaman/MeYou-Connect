@@ -1,5 +1,20 @@
 # MYC recovery progress — 16 October 2026
 
+## Latest workstation continuation — 14:06 UTC /21:06 Bangkok
+
+**Full PostgreSQL logical backup/isolated restore PASS; MYC recovery remains INCOMPLETE.** This supersedes the missing-authentication preflight later in this historical log.
+
+- Full17.6 custom dump133,444,414bytes; source snapshot08:42:41 UTC; all214 tables and23 schemas included with zero excluded/unreadable tables. Dump SHA256 `d5e01082b062538c265b4c2322419a02a60fb418a6f5604c6ab1f099f949247d`.
+- Fresh network-none Docker restore succeeded, cron launcher off/executions0. Same-snapshot counts/content and catalog/ACL/roles/5 sequences match. Candidate/LINE/Finance/Shadow history is preserved; intentionally empty business masters remain empty. Storage metadata is covered; object bytes/Vault decryption are outside this PostgreSQL test.
+- Private copies outside the Supabase project re-read/hashed; existing backup/restore records registered PASS under `MYC-PG-BK-20261016T084239Z` / `MYC-PG-RT-20261016T084239Z`. Broader business restore readiness deliberately remains partial.
+- Source Cron11 stays false, no cleanup, cutover or guard deployment. Reader lease is bounded; local secret file excluded from Git. Root `AGENTS.md` already provides the ordered workflow.
+- Next deliverable: exact Founder approval for reclaim, with tested retained subset/rollback and fail-closed live rechecks. Draft50MiB shadow cap is below the retained footprint and must be resolved/tested before imports can resume.
+
+See [backup/restore evidence](MYC_POSTGRES_RESTORE_RESULT_20261016.md) and [reclaim approval scope](MYC_SHADOW_RECLAIM_APPROVAL_20261016.md). Do not treat older NOT_STARTED statements below as current state.
+
+
+## Historical recovery evidence
+
 Status: INCOMPLETE. This report supersedes stale live-status claims in the initial runbook, not the canonical business flow.
 
 ## Verified live evidence (07:17–07:25 UTC)

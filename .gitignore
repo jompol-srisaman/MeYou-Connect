@@ -5,5 +5,7 @@ node_modules/
 .next/
 .vercel/
 .supabase/
+/supabase/Password.txt
+/supabase/Password
 *.log
 .DS_Store

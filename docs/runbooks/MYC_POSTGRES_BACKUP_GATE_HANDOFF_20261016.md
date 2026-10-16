@@ -1,8 +1,16 @@
 # MYC PostgreSQL backup gate — continuation on a connected workstation
 
+## Latest continuation — 16 October, 14:06 UTC / 21:06 Bangkok
+
+**Full PostgreSQL backup + actual isolated restore PASS. Do not repeat the missing-password preflight or re-dump without a freshness/state reason.** See [verified result](MYC_POSTGRES_RESTORE_RESULT_20261016.md) and [reclaim approval package](MYC_SHADOW_RECLAIM_APPROVAL_20261016.md).
+
+The connected workstation successfully used PostgreSQL17.6 tools in Docker, TLS Session Pooler5432 and the authorized temporary backup reader. Password input stayed in private local files/DPAPI; no main postgres password change, pgAdmin or paid service was needed. Both private artifact copies were re-read/SHA256 verified; the fresh network-isolated restore matches all214 tables plus schema/security/sequence metadata. Successful evidence is registered in existing backup controls. No source data has been removed; Cron11 and cutover gates remain off.
+
+**The next Founder action is approval of the exact reclaim scope, not supplying credentials.** Full Supabase/business DR, Storage object bytes, media gaps, financial reconciliation, physical recovery and Cron restart remain open. The original instructions below are retained as historical gate requirements; the missing-access paragraph no longer describes current state.
+
 This task is authorized recovery of existing project `pgjmxdeafzogzsyawejs`; no new project, paid API, paid upgrade, password reset, deletion, cron reactivation, or architecture change is authorized by this handoff.
 
-## The one required Founder action
+## Original workstation handoff — access prerequisite now satisfied
 
 Open Codex Desktop in `jompol-srisaman/MeYou-Connect` on a machine able to connect to the existing PostgreSQL **Session Pooler**, then give that session this file. Supply any needed database connection only through a local secret/environment/password prompt. Never paste DB passwords, service-role keys, connection URLs containing passwords, or dump contents into chat/GitHub. The cloud session cannot export PostgreSQL using its SQL-only connector, has no PostgreSQL credentials, and cannot resolve the direct DB host.
 

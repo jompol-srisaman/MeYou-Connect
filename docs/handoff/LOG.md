@@ -2,6 +2,14 @@
 
 รายการใหม่อยู่บนสุด (ดูรูปแบบใน `../AI_HANDOFF.md`)
 
+## 2026-10-16 — Codex + Luna6 — Full PostgreSQL backup/restore PASS; reclaim approval pending
+- Task: ดำเนิน MYC Recovery ต่อจาก Issue28/PR29 บนเครื่องเดิม; ไม่ติดตั้ง pgAdmin/ไม่ใช้บริการเสียเงิน
+- Changes: ใช้ backup reader ผ่าน TLS Session Pooler5432, PostgreSQL17.6 ใน Docker; เก็บ secret เฉพาะเครื่อง/DPAPIและกันไฟล์ Password ออกจาก Git; ทำ full consistent dump และ fresh network-none restore; บันทึก backup/restore PASS ใน control เดิม; เพิ่มรายงานผลและ exact reclaim review SQL/approval package
+- Evidence: dump133,444,414bytes SHA256 d5e01082b062538c265b4c2322419a02a60fb418a6f5604c6ab1f099f949247d; snapshot08:42:41 UTC;214 tables/23 schemas/5 sequences/roles/catalog/ACL ตรงกัน; independent local package21 files re-read/hash PASS; full-shadow extraction rollback786,782rows/fingerprint PASS บน disposable clone
+- Gate state: PostgreSQL logical backup/restore PASS; overall recovery INCOMPLETE; broader business/media/document/finance DR ไม่อ้างว่า PASS; source shadow786,782,Raw4,749,readonly on,Cron11false ณ14:10 UTC; no source cleanup/guard deployment/cutover
+- Next step: อ่าน MYC_POSTGRES_RESTORE_RESULT_20261016.md และ MYC_SHADOW_RECLAIM_APPROVAL_20261016.md; ขอ Founder อนุมัติ archive-only749,964/keep36,818/all3,028 sessions; ซ้อม reclaim/retained COPY/rollback บน clone PASS แล้ว; หลังอนุมัติให้ live recheck+freeze แล้วจึงทำตาม exact SQL
+- Blocker / needs Founder: explicit deletion approval เท่านั้นในขั้นถัดไป; ร่าง guard50MiB ต่ำกว่า retained footprint ต้องแก้/ทดสอบก่อนเปิด import; Cron11 ห้ามเปิดจน restart gates เดิมครบ
+
 ## 2026-10-16 — Codex + Luna6 — Local PostgreSQL backup preflight and AGENTS.md
 - Task: ต่อ MYC Recovery จาก PR29; Full PostgreSQL Backup + isolated Restore Test เป็น gate แรก; Founder ขอคำสั่งทำงานตามลำดับใน `AGENTS.md`
 - Changes: clone recovery branch เข้า workspace ว่าง; เพิ่ม `AGENTS.md`; เตรียม official Supabase PostgreSQL17.6 tool image ตรง source release; อัปเดตผล preflight ใน `docs/runbooks/MYC_RECOVERY_PROGRESS_20261016.md`; ไม่มีการแก้ DB หรือ deploy code
