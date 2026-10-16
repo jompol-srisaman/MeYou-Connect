@@ -2,6 +2,15 @@
 
 รายการใหม่อยู่บนสุด (ดูรูปแบบใน `../AI_HANDOFF.md`)
 
+## 2026-10-16 — Codex + Luna6 — Local PostgreSQL backup preflight and AGENTS.md
+- Task: ต่อ MYC Recovery จาก PR29; Full PostgreSQL Backup + isolated Restore Test เป็น gate แรก; Founder ขอคำสั่งทำงานตามลำดับใน `AGENTS.md`
+- Changes: clone recovery branch เข้า workspace ว่าง; เพิ่ม `AGENTS.md`; เตรียม official Supabase PostgreSQL17.6 tool image ตรง source release; อัปเดตผล preflight ใน `docs/runbooks/MYC_RECOVERY_PROGRESS_20261016.md`; ไม่มีการแก้ DB หรือ deploy code
+- Evidence: live DB1,647,520,915bytes/read-only on/Cron11false; shadow786,782/sessions3,028/Raw4,730/backup_artifacts0; pg_dump/pg_restore17.6 พร้อม; repo/Preview/Production Actions secret metadata ทั้งหมด0; workflow ที่พบเป็น web typecheck/build; Luna6 review instructions ไม่พบข้อบกพร่อง
+- Gate state: **INCOMPLETE**; full dump และ isolated restore **NOT STARTED** เพราะไม่มี PostgreSQL authentication; ไม่ลบข้อมูล ไม่รีเซ็ตรหัส ไม่เปิด Cron11 หรือ cutover gates และไม่ลงทะเบียน backup PASS
+- Next step: ใช้ connection เดิมจาก private local environment/password prompt หรือ authorized secret store แล้วทำ full consistent dump + independent hash/readback + isolated restore/comparison ตาม handoff
+- Blocker / needs Founder: Founder ไม่ทราบรหัส DB เดิม; ChatGPT SQL connector ไม่ได้ให้รหัสสำหรับ pg_dump; GitHub metadata ที่ตรวจไม่มี credential source; handoff ยังไม่อนุญาต password reset ห้ามส่งรหัส/connection ที่มีรหัสผ่านผ่านแชทหรือ GitHub
+- Documentation note: README อ้าง `docs/AI_HANDOFF.md` แต่ไฟล์นั้นไม่มีใน recovery branch ปัจจุบัน; ใช้ runbook ปัจจุบันกับ log นี้เป็นหลักฐาน โดยไม่สมมติเนื้อหาไฟล์ที่หายไป
+
 ## 2026-10-02 — Claude — Money↔People linking, Finance/Partners tabs, Founder WebApp v5
 - Task: แก้ปัญหาที่ Founder พบว่า Dashboard ใช้งานจริงไม่ได้ — ไม่เห็นชื่อโรงงาน, ไม่เห็นหน้าการเงิน, "จบงานแล้ว" ไม่ขึ้น
 - Root cause ที่เจอ: เงินจริง (รับจาก Inaba, จ่ายค่าคอม Partner) ถูกบันทึกใน `22_Finance_Cashbook` เป็นข้อความบรรยายอิสระ (เช่น "อาทิตย์ ยิวคิม") ไม่ได้เลือกจาก Candidate ID — ระบบจึงจับคู่อัตโนมัติไม่ได้ และ `05_Placement`/`08_Revenue`/`10_Commission` ว่างเปล่าจริง (ธุรกิจไม่ได้ใช้ชีตเหล่านี้เลย)
