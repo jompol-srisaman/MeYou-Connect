@@ -2,6 +2,14 @@
 
 รายการใหม่อยู่บนสุด (ดูรูปแบบใน `../AI_HANDOFF.md`)
 
+## 2026-10-17 — Codex + Luna6 — Approved reclaim complete; V4/capacity controls deployed
+- Task: ต่อ Issue28/PR29 ตาม Founder approval MYC-RECLAIM-20261016-749964; ไม่ทำ recovery ซ้ำ
+- Changes: encrypted recovery kit verified offsite/separate Founder-only key; exact reclaim complete/ordinary write restored; temporary roles NOLOGIN/deprivileged; deployed deltaV4/75MiBshadow/400MiBDBstop/250MiBwarning; existing Cron3 bounded collector; real Founder Gmail receipt/queue; native myc-recovery heartbeat/private aggregate dashboard
+- Evidence: full dump133,444,414bytes SHA256d5e01082b062538c265b4c2322419a02a60fb418a6f5604c6ab1f099f949247d; encrypted195,415,924bytes downloaded/decrypted/hash verified; DB1,647,651,987→149,367,955bytes; protected36,818rows/3,028sessions fingerprints unchanged; actualdelta69rows/replayzero; all4,749Raw canonicalSheets exactonce/allledgerSYNCED; owner INBOX receipt1a1479f1993096a4; physical guards/concurrency/ACL tested isolated
+- Gate state: INCOMPLETE; Cron11false/Shadowgatefalse/master+cutoverfalse;02:38UTC DB149,712,019bytes/readonlyoff/no capacityalert. Observation started17Oct02:13:59UTC, earliest24h18Oct09:14Bangkok with actual coverage check
+- Next step: read MYC_RECOVERY_EXECUTION_20261016.md, MYC_PERMANENT_PROTECTION_ACCEPTANCE_20261017.md and MYC_CAPACITY_MONITOR_OPERATIONS_20261017.md. Complete reviewed LINE terminal/concurrency/media retry fixes, actual provider E2E, media/object-byte/source finance reconciliation. Keep PR draft; no Cron restart/incident closure
+- Blocker / needs Founder: no repeated delete/password/passphrase approval. Six media mirrors unresolved; actual provider test may need one non-PII OA/group message after deployment ready. Clock cannot be accelerated for24h evidence
+
 ## 2026-10-16 — Codex + Luna6 — Full PostgreSQL backup/restore PASS; reclaim approval pending
 - Task: ดำเนิน MYC Recovery ต่อจาก Issue28/PR29 บนเครื่องเดิม; ไม่ติดตั้ง pgAdmin/ไม่ใช้บริการเสียเงิน
 - Changes: ใช้ backup reader ผ่าน TLS Session Pooler5432, PostgreSQL17.6 ใน Docker; เก็บ secret เฉพาะเครื่อง/DPAPIและกันไฟล์ Password ออกจาก Git; ทำ full consistent dump และ fresh network-none restore; บันทึก backup/restore PASS ใน control เดิม; เพิ่มรายงานผลและ exact reclaim review SQL/approval package

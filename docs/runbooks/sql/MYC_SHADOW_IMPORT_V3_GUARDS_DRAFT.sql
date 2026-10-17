@@ -1,6 +1,10 @@
 -- REVIEW DRAFT ONLY. NOT APPLIED. No deletion or cron reactivation.
+-- Historical V3 rehearsal only; superseded by deployed V4 migration
+-- 20261017020029_myc_shadow_import_v4_delta_guards.sql. Do not apply V3 live.
 -- Preserves existing signatures/owners/ACLs/search_path and safety gates.
 -- Must be exercised on a verified restored copy before production execution.
+-- Approved retained baseline is61,038,592bytes (~58.2MiB). 75MiB gives ~16.8MiB
+-- staging headroom; overall database hard stop stays400MiB (Free quota500MB).
 BEGIN;
 CREATE OR REPLACE FUNCTION ops.open_shadow_import_session(p_source_system text, p_source_file_id text, p_source_file_name text, p_source_revision text, p_snapshot_at timestamp with time zone, p_source_of_truth boolean, p_expected_entities text[], p_metadata jsonb, p_created_by text)
  RETURNS uuid
@@ -35,7 +39,7 @@ begin
       raise exception 'SHADOW_INPUT_BUDGET_EXCEEDED';
     end if;
     if pg_catalog.pg_database_size(pg_catalog.current_database()) >= 419430400
-       or pg_catalog.pg_total_relation_size('ops.shadow_import_rows'::regclass) >= 52428800 then
+       or pg_catalog.pg_total_relation_size('ops.shadow_import_rows'::regclass) >= 78643200 then
       raise exception 'SHADOW_CAPACITY_STOP';
     end if;
     if (select count(*) from ops.shadow_import_sessions where source_system='GOOGLE_SHEETS' and source_revision like 'sha256:%') >= 20 then
@@ -68,11 +72,13 @@ begin
   if p_source_row_number < 2 then raise exception 'source row number must be >= 2'; end if;
 
   if exists(select 1 from ops.shadow_import_sessions s where s.session_id=p_session_id and s.source_system='GOOGLE_SHEETS') then
+    -- Serialize capacity checks across sessions, not only rows in one session.
+    perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('MYC_SHADOW_IMPORT_V3', 0));
     if not exists(select 1 from ops.shadow_import_sessions s where s.session_id=p_session_id and s.metadata->>'guard_applied'='v3') then
       raise exception 'SHADOW_HASH_PROTOCOL_REQUIRED';
     end if;
     if pg_catalog.pg_database_size(pg_catalog.current_database()) >= 419430400
-       or pg_catalog.pg_total_relation_size('ops.shadow_import_rows'::regclass) >= 52428800 then
+       or pg_catalog.pg_total_relation_size('ops.shadow_import_rows'::regclass) >= 78643200 then
       raise exception 'SHADOW_CAPACITY_STOP';
     end if;
     if pg_catalog.octet_length(coalesce(p_raw_record,'{}')::text)>32768

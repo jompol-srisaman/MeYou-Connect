@@ -1,6 +1,10 @@
 # MYC recovery progress — 16 October 2026
 
-## Latest workstation continuation — 14:06 UTC /21:06 Bangkok
+## Current continuation — 17 October 02:38 UTC /09:38 Bangkok
+
+Approved reclaim is complete after verified encrypted independent backup and real restore. Database about143MiB, ordinary read-onlyoff; original36,818 retained rows and3,028 session fingerprints preserved. Controlled V4 live delta added69rows/one session; replay addedzero. Capacity stops and monitoring are deployed, real Founder email receipt verified, and bounded observation started02:13:59UTC. **Do not repeat reclaim or approval/password preflight.** Detailed current evidence and remaining gates are in [execution evidence](MYC_RECOVERY_EXECUTION_20261016.md) and [permanent acceptance](MYC_PERMANENT_PROTECTION_ACCEPTANCE_20261017.md). Cron11/master/cutover remainoff; status INCOMPLETE. Historical entries below are not current instructions.
+
+## Historical workstation continuation — 16 October 14:06 UTC /21:06 Bangkok
 
 **Full PostgreSQL logical backup/isolated restore PASS; MYC recovery remains INCOMPLETE.** This supersedes the missing-authentication preflight later in this historical log.
 

@@ -1,6 +1,10 @@
 # MYC PostgreSQL backup gate — continuation on a connected workstation
 
-## Latest continuation — 16 October, 14:06 UTC / 21:06 Bangkok
+## Current continuation — 17 October, 02:38 UTC / 09:38 Bangkok
+
+Founder approved `MYC-RECLAIM-20261016-749964`; independent encrypted offsite recovery was verified and the exact reclaim completed. Database is now about143MiB and ordinary read/write works. V4 delta import, physical capacity stops, numeric monitoring and an actual Founder email receipt passed their stated tests. Cron11 and master/cutover gates remain off. **Do not repeat reclaim, request deletion approval again, reset a password or ask for a new passphrase.** Continue from [execution evidence](MYC_RECOVERY_EXECUTION_20261016.md), [acceptance](MYC_PERMANENT_PROTECTION_ACCEPTANCE_20261017.md) and [monitor operations](MYC_CAPACITY_MONITOR_OPERATIONS_20261017.md). Recovery is INCOMPLETE pending channel/provider/media/finance gates and real24-hour observation; earliest observation boundary18October09:14Bangkok.
+
+## Historical continuation — 16 October, 14:06 UTC / 21:06 Bangkok
 
 **Full PostgreSQL backup + actual isolated restore PASS. Do not repeat the missing-password preflight or re-dump without a freshness/state reason.** See [verified result](MYC_POSTGRES_RESTORE_RESULT_20261016.md) and [reclaim approval package](MYC_SHADOW_RECLAIM_APPROVAL_20261016.md).
 

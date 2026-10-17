@@ -1,13 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-// datahub-shadow-import v2 (READ-ONLY toward Google Sheets; writes ONLY ops.shadow_import_* via RPC)
+// datahub-shadow-import v4 (READ-ONLY toward Google Sheets; writes ONLY ops.shadow_import_* via RPC)
 // Modes: health | headers | import {entities?, dryRun?}
 // Privacy: only allowlisted fields are staged. Cashbook: NO account numbers, NO slip refs, NO free-text notes, NO source file link.
 const PROJECT_REF = "pgjmxdeafzogzsyawejs";
 const DATA_HUB_ID = Deno.env.get("MYC_DATA_HUB_SPREADSHEET_ID") ?? "1o52Vpri7toZDviODQ12tpOoLgCs7Z5cYMmUZMc0Jeoc";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? `https://${PROJECT_REF}.supabase.co`;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const VERSION = "datahub-shadow-import-v3";
+const VERSION = "datahub-shadow-import-v4";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
 const CREATED_BY = "claude:datahub-shadow-import";
 
@@ -118,8 +118,20 @@ async function snapshotRevision(keys: string[], plan: unknown, staged: unknown[]
   const value = JSON.stringify({ version: VERSION, keys, plan, staged });
   const bytes = new TextEncoder().encode(value);
   if (staged.length > 1000 || bytes.byteLength > 2 * 1024 * 1024) throw new Error("SHADOW_INPUT_BUDGET_EXCEEDED");
+  if (staged.some(row => new TextEncoder().encode(JSON.stringify(row)).byteLength > 32 * 1024)) throw new Error("SHADOW_ROW_BUDGET_EXCEEDED");
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
   return { revision: `sha256:${Array.from(digest, b => b.toString(16).padStart(2, "0")).join("")}`, bytes: bytes.byteLength };
+}
+
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    return `{${Object.keys(obj).sort().map(k => `${JSON.stringify(k)}:${canonical(obj[k])}`).join(",")}}`;
+  }
+  const serialized = JSON.stringify(value);
+  if (serialized === undefined) throw new Error("SHADOW_CANONICAL_VALUE_INVALID");
+  return serialized;
 }
 
 async function existingSnapshot(revision: string) {
@@ -187,28 +199,80 @@ Deno.serve(async (req: Request) => {
         plan[k] = { sheet: e.sheet, rows: n, skippedEmpty: empty, missingHeaders: missing };
       }
       const fingerprint = await snapshotRevision(keys, plan, staged);
-      if (dryRun) return json({ ok: true, version: VERSION, dryRun: true, plan, revision: fingerprint.revision });
       if (Object.values(plan).some(p => p.missingHeaders.length)) return json({ ok: false, error: "SHADOW_SOURCE_SCHEMA_MISMATCH", plan }, 409);
+      const seen = new Set<string>();
+      for (const row of staged) {
+        if (!row.pk || !row.pk.trim()) return json({ ok: false, error: "EMPTY_SOURCE_PK", entity: row.entity, source_row_number: row.row }, 409);
+        const key = `${row.entity}\u0000${row.pk}`;
+        if (seen.has(key)) return json({ ok: false, error: "DUPLICATE_SOURCE_PK", entity: row.entity, source_pk: row.pk }, 409);
+        seen.add(key);
+      }
+      type BaselineRow = { entity_key: string; source_pk: string; source_row_number: number; normalized_record: Record<string, unknown> };
+      type Baseline = { baseline_session_id: string | null; rows: BaselineRow[]; entity_scope: string[] };
+      let rawBaseline: unknown;
+      try {
+        rawBaseline = await rpc<unknown>("get_shadow_import_baseline", { p_source_system: "GOOGLE_SHEETS", p_source_file_id: DATA_HUB_ID, p_entities: keys });
+      } catch {
+        throw new Error("SHADOW_BASELINE_READ_FAILED");
+      }
+      const invalidBaseline = () => json({ ok: false, version: VERSION, error: "SHADOW_BASELINE_INVALID" }, 503);
+      if (!rawBaseline || typeof rawBaseline !== "object" || Array.isArray(rawBaseline)) return invalidBaseline();
+      const baseline = rawBaseline as Partial<Baseline>;
+      if (!(baseline.baseline_session_id === null || (typeof baseline.baseline_session_id === "string" && baseline.baseline_session_id.trim().length > 0)) ||
+          !Array.isArray(baseline.rows) || !Array.isArray(baseline.entity_scope) || baseline.entity_scope.length !== keys.length ||
+          baseline.entity_scope.some((e, i) => typeof e !== "string" || e !== keys[i])) return invalidBaseline();
+      let baselineJson: string;
+      try { baselineJson = JSON.stringify(rawBaseline); } catch { return invalidBaseline(); }
+      if (baseline.rows.length > 1000 || new TextEncoder().encode(baselineJson).byteLength > 2 * 1024 * 1024 ||
+          (baseline.rows.length > 0 && baseline.baseline_session_id === null)) return invalidBaseline();
+      const baselineSeen = new Set<string>();
+      for (const row of baseline.rows) {
+        if (!row || typeof row !== "object" || Array.isArray(row) || typeof row.entity_key !== "string" || !keys.includes(row.entity_key) ||
+            typeof row.source_pk !== "string" || !row.source_pk.trim() || !Number.isSafeInteger(row.source_row_number) || row.source_row_number < 2 ||
+            !row.normalized_record || typeof row.normalized_record !== "object" || Array.isArray(row.normalized_record)) return invalidBaseline();
+        const entity = ENT[row.entity_key];
+        const record = row.normalized_record;
+        const allowed = new Set(Object.keys(entity.fields));
+        if (Object.keys(record).some(field => !allowed.has(field)) || record[entity.pk] !== row.source_pk) return invalidBaseline();
+        const baselineKey = `${row.entity_key}\u0000${row.source_pk}`;
+        if (baselineSeen.has(baselineKey)) return invalidBaseline();
+        baselineSeen.add(baselineKey);
+        let rowJson: string;
+        try { rowJson = JSON.stringify(row); } catch { return invalidBaseline(); }
+        if (new TextEncoder().encode(rowJson).byteLength > 32 * 1024) return invalidBaseline();
+      }
+      const prior = baseline.rows;
+      const current = new Map(staged.map(s => [`${s.entity}\u0000${s.pk}`, s]));
+      const priorMap = new Map(prior.map(s => [`${s.entity_key}\u0000${s.source_pk}`, s]));
+      const removed = [...priorMap.keys()].filter(k => !current.has(k));
+      if (removed.length) return json({ ok: false, version: VERSION, error: "SOURCE_DELETION_REQUIRES_REVIEW", removed_count: removed.length, removed_ids: removed.slice(0, 20).map(k => k.split("\u0000")[1]) }, 409);
+      const changed = staged.filter(s => {
+        const old = priorMap.get(`${s.entity}\u0000${s.pk}`);
+        return !old || canonical({ entity: s.entity, source_row_number: s.row, source_pk: s.pk, record: s.rec }) !== canonical({ entity: old.entity_key, source_row_number: old.source_row_number, source_pk: old.source_pk, record: old.normalized_record });
+      });
+      const changedBytes = new TextEncoder().encode(JSON.stringify(changed)).byteLength;
+      if (dryRun) return json({ ok: true, version: VERSION, dryRun: true, plan, revision: fingerprint.revision, input_rows: changed.length, input_bytes: changedBytes, baseline_session_id: baseline.baseline_session_id });
       const previous = await existingSnapshot(fingerprint.revision);
       if (previous) {
         if (!["VALIDATED", "RECONCILED"].includes(previous.status)) return json({ ok: false, error: "SHADOW_INCOMPLETE_SNAPSHOT_REQUIRES_REVIEW", sessionId: previous.session_id }, 409);
         return json({ ok: true, version: VERSION, skipped: "UNCHANGED_SOURCE", sessionId: previous.session_id, plan });
       }
+      if (!changed.length) return json({ ok: true, version: VERSION, skipped: "UNCHANGED_SOURCE", plan, revision: fingerprint.revision, baseline_session_id: baseline.baseline_session_id });
 
       const sessionId = await rpc<string>("open_shadow_import_session", {
         p_source_system: "GOOGLE_SHEETS", p_source_file_id: DATA_HUB_ID, p_source_file_name: meta.properties?.title ?? "DATA_HUB",
         p_source_revision: fingerprint.revision, p_snapshot_at: snapshotAt, p_source_of_truth: true, p_expected_entities: keys,
-        p_metadata: { function: VERSION, mode: "read_only_sheets_to_shadow", allowlisted_fields_only: true, guard_required: "v3", input_rows: staged.length, input_bytes: fingerprint.bytes }, p_created_by: CREATED_BY,
+        p_metadata: { function: VERSION, mode: "read_only_sheets_to_shadow", allowlisted_fields_only: true, guard_required: "v4", import_protocol: "delta-v1", baseline_session_id: baseline.baseline_session_id, input_rows: changed.length, input_bytes: changedBytes, source_rows: staged.length, source_revision: fingerprint.revision }, p_created_by: CREATED_BY,
       });
       // The matching DB patch stamps guard_applied. An unpatched DB fails closed.
       const guard = await fetch(`${SUPABASE_URL}/rest/v1/shadow_import_sessions?session_id=eq.${sessionId}&select=metadata`, { headers: sbHeaders() });
       if (!guard.ok) throw new Error("SHADOW_GUARD_READ_FAILED");
       const guarded = (await guard.json()) as { metadata: { guard_applied?: string; database_bytes?: number } }[];
-      if (guarded[0]?.metadata?.guard_applied !== "v3") throw new Error("SHADOW_DATABASE_GUARD_NOT_INSTALLED");
+      if (guarded[0]?.metadata?.guard_applied !== "v4") throw new Error("SHADOW_DATABASE_GUARD_NOT_INSTALLED");
       if (Number(guarded[0]?.metadata?.database_bytes) >= 250 * 1024 * 1024) console.warn("MYC_SHADOW_CAPACITY_WARNING", { database_bytes: guarded[0].metadata.database_bytes });
       const CH = 10;
-      for (let i = 0; i < staged.length; i += CH) {
-        await Promise.all(staged.slice(i, i + CH).map((s) => rpc("stage_shadow_row", {
+      for (let i = 0; i < changed.length; i += CH) {
+        await Promise.all(changed.slice(i, i + CH).map((s) => rpc("stage_shadow_row", {
           p_session_id: sessionId, p_entity_key: s.entity, p_source_row_number: s.row, p_source_pk: s.pk, p_raw_record: s.rec, p_normalized_record: s.rec,
         })));
       }
@@ -220,6 +284,8 @@ Deno.serve(async (req: Request) => {
     return json({ ok: false, error: "UNKNOWN_MODE" }, 400);
   } catch (e) {
     if (String(e).includes("SHADOW_SNAPSHOT_ALREADY_EXISTS")) return json({ ok: true, version: VERSION, skipped: "CONCURRENT_DUPLICATE" });
+    if (String(e).includes("SHADOW_STALE_BASELINE")) return json({ ok: false, version: VERSION, error: "SHADOW_STALE_BASELINE" }, 409);
+    if (String(e).includes("SHADOW_IMPORT_IN_PROGRESS")) return json({ ok: false, version: VERSION, error: "SHADOW_IMPORT_IN_PROGRESS" }, 409);
     console.warn("MYC_SHADOW_IMPORT_STOPPED", { version: VERSION, error: String(e).slice(0, 400) });
     return json({ ok: false, version: VERSION, error: String(e).slice(0, 400) }, 503);
   }

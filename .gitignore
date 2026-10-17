@@ -5,6 +5,7 @@ node_modules/
 .next/
 .vercel/
 .supabase/
+/supabase/.temp/
 /supabase/Password.txt
 /supabase/Password
 *.log

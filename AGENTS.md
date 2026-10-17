@@ -20,6 +20,8 @@ Help the Founder complete work with minimal coordination. Communicate in clear T
 6. **Verify the result.** Check actual output and read back mutations. Run tests appropriate to the change; documentation-only edits need diff/link/consistency checks. Mock tests establish only their simulated scope. Do not claim unrun integration, restore, or soak tests passed.
 7. **Record and hand off.** Update the relevant runbook and prepend a concise entry to `docs/handoff/LOG.md`: task, actual changes, evidence, gate state, next step, blocker. Use the existing issue/PR as the shared review trail. Keep proposed code distinct from deployed code. Do not merge, close recovery, or announce PASS with unmet gates.
 
+Current continuation: read `docs/runbooks/MYC_RECOVERY_EXECUTION_20261016.md` first for completed approved reclaim and deployed V4/capacity controls. Do not repeat the historical approval/password steps. For the existing `myc-recovery` heartbeat, follow `docs/runbooks/MYC_CAPACITY_MONITOR_OPERATIONS_20261017.md`, refresh the private dashboard from actual aggregates, and preserve truthful observation gaps. Never treat the passage of 24 hours alone as a passing soak.
+
 ## Recovery: mandatory gates, in sequence
 
 Read:
