@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {stripTypeScriptTypes} from 'node:module';
-const source=readFileSync(new URL('../supabase/functions/raw-datahub-sync/index.ts',import.meta.url),'utf8').replace(/^import .*;\n/m,'');
-const js=stripTypeScriptTypes(source+'\nglobalThis.testRange=verifyAppendRange;globalThis.testAppend=appendSheetRows;', {mode:'strip'});
+const source=readFileSync(new URL('../supabase/functions/raw-datahub-sync/index.ts',import.meta.url),'utf8').replace(/\r\n/g,'\n').replace(/^import .*;\n/m,'');
+const js=stripTypeScriptTypes(source+'\nglobalThis.testRange=verifyAppendRange;globalThis.testAppend=appendSheetRows;globalThis.testHandler=handleRawSyncRequest;', {mode:'strip'});
 function fixture(range){let url;const ctx=vm.createContext({Deno:{env:{get(){}},serve(){}},fetch:async(u)=>{url=String(u);return Response.json({updates:{updatedRange:range}});},Response,URLSearchParams,TextEncoder,console,btoa,atob});vm.runInContext(js,ctx);return{ctx,getUrl:()=>url};}
 test('canonical range accepted with exact dimensions',()=>{fixture().ctx.testRange("'19_Raw_Input_Log'!A5001:X5204",204,24);});
 test('misplaced L:AI rejects despite relative read-back equality',()=>{assert.throws(()=>fixture().ctx.testRange("'19_Raw_Input_Log'!L4556:AI4759",204,24),/MISALIGNED/);});

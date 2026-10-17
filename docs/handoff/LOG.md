@@ -2,6 +2,14 @@
 
 รายการใหม่อยู่บนสุด (ดูรูปแบบใน `../AI_HANDOFF.md`)
 
+## 2026-10-17 14:06Bangkok — Codex — Reconcile deployed V10 source; coordinate Web Issue30
+- Task: Founder asked checkedV10source/migrations push, real E2E/media/Finance-Partner-Consent and24h monitoring; final handoff in English/max8lines
+- Changes: canonicalV10files/formal migrations matched fresh deployed readback; recorded raw-sync403/HMAC401, bounded media retries, terminal/event-lock safeguards and exact protected fingerprints. No redeploy/reclaim needed in this continuation
+- Evidence:65unit/contract tests and2real PostgreSQL tests passed before gap; fresh source hashes identical07:04UTC.07:06Data Bot6new scoped mappings/6COMPLETED/6SYNCED/2Candidate proposal effects/0Finance commands.07:05Raw=ledger=SYNCED4,762; DB149,892,243bytes/readonlyoff;17capacitysamples/maxgap~20min/no>25mingap; capacityemailSENT1
+- Gate state: INCOMPLETE; Cron11/Shadowgate/master+cutoverfalse. Earliest24h18Oct09:14Bangkok with actual coverage review. OA/provider replay/concurrency,6media bytes,source Finance/Partner/Consent remainOPEN
+- Ownership: WebIssue30 independent read-only security/RLS/source-authority audit and separate proposals; CodexPR29 source/local recovery/provider E2E/media/release. No overlapping deploys
+- Next step: push reviewed V10checkpoint and publish Issue28/PR29 evidence, coordinate source pointers withIssue30; continue actual provider/media tests without invented finance/consent. No confirmed media download artifact; local bridge gap02:58–07:04UTC recorded honestly
+
 ## 2026-10-17 — Codex + Luna6 — Approved reclaim complete; V4/capacity controls deployed
 - Task: ต่อ Issue28/PR29 ตาม Founder approval MYC-RECLAIM-20261016-749964; ไม่ทำ recovery ซ้ำ
 - Changes: encrypted recovery kit verified offsite/separate Founder-only key; exact reclaim complete/ordinary write restored; temporary roles NOLOGIN/deprivileged; deployed deltaV4/75MiBshadow/400MiBDBstop/250MiBwarning; existing Cron3 bounded collector; real Founder Gmail receipt/queue; native myc-recovery heartbeat/private aggregate dashboard

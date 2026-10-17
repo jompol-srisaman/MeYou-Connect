@@ -1,6 +1,6 @@
 # MYC permanent protection acceptance — 17 October 2026
 
-Status: **INCOMPLETE**. V4 delta/capacity controls and monitoring are deployed; channel candidates are not deployed. Updated02:38UTC /09:38Bangkok, existing MYC TEST project `pgjmxdeafzogzsyawejs`. See [execution evidence](MYC_RECOVERY_EXECUTION_20261016.md). Do not repeat reclaim.
+Status: **INCOMPLETE**. V4 delta/capacity controls, monitoring and V10 LINE/raw-sync protections are deployed. Updated07:06UTC /14:06Bangkok, existing MYC project `pgjmxdeafzogzsyawejs`. See [execution evidence](MYC_RECOVERY_EXECUTION_20261016.md). Do not repeat reclaim.
 
 | Gate | Actual evidence and state |
 |---|---|
@@ -16,13 +16,13 @@ Status: **INCOMPLETE**. V4 delta/capacity controls and monitoring are deployed; 
 | Bounded history | PASS rollback test; live capture at most one/15min, hard2016cap then archive-required alert/stop, no prior row deletion. Capture never asserts business DR readiness. |
 |24-hour observation | IN PROGRESS from2026-10-17T02:13:59.664052Z;02:38read two samples/latest02:30, DB142.78MiB/shadow58.35MiB/no active capacity alert. Earliest18Oct09:14Bangkok; inspect actual gaps/freshness/growth. Gates off means not automatic-import load soak. |
 | Raw/Sheets | PASS point-in-time:4,749DBRaw IDs canonicalSheet exactly once, missing0/duplicate0; all4,749ledgerSYNCED/backlogs0. Eight Sheet-only IDs/shifted originals preserved. |
-| Channel retry/idempotency | HOLD DEPLOYMENT: candidate code retrieved from current deployed adapters, isolated full-pipeline tests cover Candidate proposal idempotency/zeroFinance or master effects. Independent terminal/concurrency/media retry review fixes still in progress; actual signed provider E2E pending. |
+| Channel retry/idempotency | V10 deployed after independent review.65unit/contract and2actual PostgreSQL integration tests passed, including two-session locking/terminal exclusion. Actual07:06Data Bot readback6new scoped mappings/6COMPLETED/6classification effects/2Candidate proposals/6SYNCED and0Finance commands. OA and actual provider replay/concurrent delivery still OPEN. |
 | Media/object bytes | OPEN:171intake,165MIRRORED/checksum metadata,6SOURCE_NOT_MIRRORED. Actual object bytes not independently exported. Metadata is not object-byte backup; no hidden export API enabled. |
 | Finance/consent/source authority | OPEN source reconciliation: masters intentionallyempty/pre-cutover; historical four outcomes awaitingcollection/three negatives/two identity holds. No invented COLLECTED/PAID, partner, consent or duplicate business effect. |
 | Capacity model | PASS actual isolated schema-only fixture:1,000Raw/Event/ledger pairs add5,316,608bytes,10,000add51,019,776bytes. Separate metadata media projection; excludes provider/WAL/worker/media load. |
 | Cron/cutover | PASS last read: Cron11false, Shadowgatefalse, business_master_apply_enabled/migration_target_apply_enabled/production_cutover_approvedfalse; existing Cron3active. Re-read before deployment. |
 
-Formal deployed migrations: `20261017020029_myc_shadow_import_v4_delta_guards.sql`, `20261017021011_myc_capacity_email_queue.sql`, `20261017021358_myc_capacity_guard_observability.sql`. Their review SQL remains available; filenames do not mean deployed artifacts are still drafts. LINE candidate has no source migration/deployment yet.
+Formal deployed migrations: `20261017020029_myc_shadow_import_v4_delta_guards.sql`, `20261017021011_myc_capacity_email_queue.sql`, `20261017021358_myc_capacity_guard_observability.sql`, `20261017025022_myc_raw_sync_auth.sql`, `20261017025105_myc_channel_ingress_guards.sql`. Review SQL remains available; filenames do not mean deployed artifacts are still drafts. Fresh07:04V10source readbacks match local files. Source samples continue, but local bridge had an availability gap; see execution evidence for current17sample coverage and remaining gates.
 
 Use [monitor operations](MYC_CAPACITY_MONITOR_OPERATIONS_20261017.md) for fresh private dashboard and receipt procedure, and [storage matrix](MYC_STORAGE_AUTHORITY_CAPACITY_20261017.md) for measured model limits. Cron3 collects while desktop is off; Gmail bridge cannot send then. Capacity health does not resolve unrelated incidents or media gaps.
 
