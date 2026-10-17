@@ -34,6 +34,7 @@ function loadFunction(account, options = {}) {
     },
     storage: { from: bucket => ({ upload: async (objectKey, bytes, config) => {
       uploadCalls.push({ bucket, objectKey, bytes: bytes.length, config });
+      if (options.rejectNonAsciiStorageKeys && /[^\x00-\x7f]/.test(objectKey)) return { error: { message: 'Invalid key: non-ASCII path component' } };
       if (options.alreadyExistsOnRepeat && uploadCalls.length > 1) return { error: { message: 'already exists' } };
       return { error: null };
     } }) },
@@ -204,6 +205,22 @@ testDeployed('attachment content is mirrored and registered as sensitive for the
   assert.equal(registry.args.p_sensitive, true);
   assert.equal(registry.args.p_mirror_status, 'MIRRORED');
   assert.equal(registry.args.p_metadata.registry_state, 'PENDING_DOCS_WRITE_GATE');
+});
+
+testDeployed('Thai original filenames stay in registry metadata while new storage keys use ASCII checksum names', async () => {
+  for (const account of ['OFFICIAL', 'DATA_BOT']) {
+    const f = loadFunction(account, { accessToken: true, rejectNonAsciiStorageKeys: true });
+    const originalFilename = 'เอกสารแนบ.png';
+    const payload = { events: [{ type: 'message', webhookEventId: `fixture-thai-filename-${account}`, source: { type: 'user', userId: 'fixture-user' }, message: { id: `fixture-thai-file-${account}`, type: 'image', fileName: originalFilename } }] };
+    const { response } = await signedRequest(f, account, payload);
+    assert.equal(response.status, 200);
+    assert.equal(f.uploadCalls.length, 1);
+    const registry = f.rpcCalls.find(c => c.name === 'line_capture_register_file');
+    assert.equal(registry.args.p_original_filename, originalFilename);
+    assert.equal(registry.args.p_mirror_status, 'MIRRORED');
+    assert.match(f.uploadCalls[0].objectKey, new RegExp(`^raw/MYC-RAW-FIXTURE/fixture-thai-file-${account}/${registry.args.p_checksum_sha256}\\.png$`));
+    assert.doesNotMatch(f.uploadCalls[0].objectKey, /[^\x00-\x7f]/);
+  }
 });
 
 testDeployed('missing LINE content token preserves raw capture, records it, and requests retry', async () => {

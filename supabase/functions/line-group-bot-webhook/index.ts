@@ -384,7 +384,7 @@ async function mirrorAttachment(event: LineEvent, rawInputId: string | null, acc
     mime = r.headers.get("content-type")?.split(";")[0]?.trim() || mime;
     checksum = await sha256Hex(bytes);
     original = safeName(m.fileName ?? `${m.id}.${extensionForMime(mime)}`);
-    const storedName = `${checksum}_${original}`;
+    const storedName = `${checksum}.${extensionForMime(mime)}`;
     objectPath = `raw/${rawInputId}/${m.id}/${storedName}`;
     const { error: uploadError } = await supabaseAdmin.storage.from(RAW_BUCKET).upload(objectPath, bytes, {
       contentType: mime,

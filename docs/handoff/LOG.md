@@ -2,6 +2,14 @@
 
 รายการใหม่อยู่บนสุด (ดูรูปแบบใน `../AI_HANDOFF.md`)
 
+## 2026-10-17 14:45Bangkok — Codex — Founder LINE E2E verified; V11 media-key fix
+- Task: continue PR29/Issue28, verify Founder diagnostic messages and keep WebIssue30 work separate
+- Changes: both LINE adapters deployedv11 with ASCII checksum/MIME object basenames; original filename stays in registry. No history rewrite/migration/reclaim. Recorded source reference checks and corrected existing native follow-up cadence to actual daily09:00 configuration
+- Evidence: OfficialOA/Bot/group3real messages COMPLETED/single classification/map/SYNCED; independent SheetIDs/text rows4484–4486 matched. Two read-only source replay calls each returned same3IDs/REPLAY_DETECTED. Full66Node tests/strictDeno/freshv11source readback/unsigned401 passed. Source refs:10Partner/4Revenue/26Commission/30Cashbook/47Evidence; reference links resolve, original proof not fully verified
+- Runtime07:40UTC: DB149,900,435bytes/readonlyoff;Raw=ledger=SYNCED4,765/backlogs0;19capacitysamples/latest07:30; no active capacity alert. Existing Cron3 collection continues independently; local Gmail bridge availability/cadence is limited
+- Gate state: INCOMPLETE; Cron11/Shadowwrite/master/cutoverfalse. Six media remain4read-only/2invalid-key; fix is deployed but none recovered. One separate existing136,253byte object copied/checksum-verified locally, not a full object backup
+- Next step: preserve verified source on GitHub; WebIssue30 can resolve original evidence pointers/consent and independent audits without overlapping deploys. Codex needs authorized original6media/provider recovery plus actual24h coverage review (earliest18Oct09:14Bangkok); no repeated message test or delete approval needed
+
 ## 2026-10-17 14:06Bangkok — Codex — Reconcile deployed V10 source; coordinate Web Issue30
 - Task: Founder asked checkedV10source/migrations push, real E2E/media/Finance-Partner-Consent and24h monitoring; final handoff in English/max8lines
 - Changes: canonicalV10files/formal migrations matched fresh deployed readback; recorded raw-sync403/HMAC401, bounded media retries, terminal/event-lock safeguards and exact protected fingerprints. No redeploy/reclaim needed in this continuation
